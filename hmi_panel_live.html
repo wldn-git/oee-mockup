@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HMI Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root, :root[data-theme="dark"]{
+    --bg-0:#111217;
+    --bg-1:#181B1F;
+    --bg-2:#141619;
+    --bg-3:#22252B;
+    --steel-line:#2C3240;
+    --ember:#5794F2;
+    --ember-dim:#3871E0;
+    --good:#73BF69;
+    --warn:#FF780A;
+    --bad:#F2495C;
+    --cyan:#33B5E5;
+    --yellow:#F2C94C;
+    --text-hi:#F4F5F7;
+    --text-mid:#CCCCDC;
+    --text-low:#8E8E9E;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --sans:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --card-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  :root[data-theme="light"]{
+    --bg-0:#F4F5F7;
+    --bg-1:#FFFFFF;
+    --bg-2:#F8FAFC;
+    --bg-3:#EFF6FF;
+    --steel-line:#E2E8F0;
+    --ember:#0067C0;
+    --ember-dim:#00529B;
+    --good:#059669;
+    --warn:#D97706;
+    --bad:#DC2626;
+    --cyan:#0284C7;
+    --yellow:#D97706;
+    --text-hi:#0F172A;
+    --text-mid:#334155;
+    --text-low:#64748B;
+    --card-shadow: 0 4px 16px rgba(0,0,0,0.04);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+  html,body{height:100%;overflow:hidden;}
+  body{
+    background:var(--bg-0);
+    color:var(--text-hi);
+    font-family:var(--sans);
+    transition:background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* ===================== HMI SHELL ===================== */
+  .hmi{
+    width:100vw;height:100vh;
+    display:grid;
+    grid-template-rows:auto 1fr auto;
+  }
+
+  /* ---- Header bar: machine identity + live clock + connection ---- */
+  .hmi-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 28px;
+    background:var(--bg-1);
+    border-bottom:1px solid var(--steel-line);
+    box-shadow:var(--card-shadow);
+  }
+  .hmi-id{display:flex;align-items:center;gap:12px;}
+  .hmi-id-badge{
+    width:38px;height:38px;border-radius:8px;
+    background:linear-gradient(135deg,#5794F2,#3871E0);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-weight:700;font-size:15px;color:#FFFFFF;
+    flex-shrink:0;box-shadow:0 3px 10px rgba(87,148,242,0.25);
+  }
+  .hmi-id-text .name{font-size:18px;font-weight:600;letter-spacing:0.01em;color:var(--text-hi);}
+  .hmi-id-text .line{font-family:var(--mono);font-size:10px;color:var(--text-low);letter-spacing:0.04em;margin-top:1px;font-weight:500;}
+
+  .hmi-header-right{display:flex;align-items:center;gap:18px;}
+  .conn-status{
+    display:flex;align-items:center;gap:6px;
+    font-family:var(--mono);font-size:10px;font-weight:600;color:var(--good);
+    background:rgba(115,191,105,0.15);border:1px solid rgba(115,191,105,0.3);padding:6px 12px;border-radius:6px;
+  }
+  .conn-dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good);animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.85);}}
+  @keyframes blink{50%{opacity:0.2;}}
+  .hmi-clock{
+    font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text-hi);letter-spacing:0.02em;
+    background:var(--bg-2);border:1px solid var(--steel-line);padding:6px 14px;border-radius:6px;font-variant-numeric:tabular-nums;
+  }
+
+  /* ---- Main body: split into status/OEE (left) and big action zone (right) ---- */
+  .hmi-body{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    overflow:hidden;
+  }
+
+  .status-col{
+    background:var(--bg-1);
+    border-right:1px solid var(--steel-line);
+    padding:14px;
+    display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;
+  }
+
+  /* Mini OEE ring block */
+  .oee-mini{
+    background:var(--bg-2);border-radius:12px;border:1px solid var(--steel-line);
+    padding:14px;text-align:center;
+  }
+  .oee-mini-label{font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;font-weight:600;}
+  .oee-mini-val{font-size:32px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1;color:var(--text-hi);}
+  .oee-mini-target{font-family:var(--mono);font-size:10px;color:var(--text-low);margin-top:4px;font-weight:500;}
+  .oee-mini-bars{display:flex;gap:8px;margin-top:12px;}
+  .oee-mini-bar{flex:1;text-align:center;}
+  .oee-mini-bar-track{height:5px;background:var(--bg-3);border-radius:3px;overflow:hidden;margin-bottom:4px;}
+  .oee-mini-bar-fill{height:100%;border-radius:3px;transition:width 0.6s ease;}
+  .oee-mini-bar-label{font-family:var(--mono);font-size:9px;color:var(--text-low);font-weight:500;}
+  .oee-mini-bar-val{font-family:var(--mono);font-size:10px;color:var(--text-hi);font-weight:600;}
+
+  /* Production counters */
+  .prod-block{background:var(--bg-2);border-radius:12px;border:1px solid var(--steel-line);padding:14px;}
+  .prod-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;}
+  .prod-row + .prod-row{border-top:1px solid var(--steel-line);}
+  .prod-label{font-family:var(--mono);font-size:10px;color:var(--text-low);display:flex;align-items:center;gap:6px;font-weight:500;}
+  .prod-dot{width:7px;height:7px;border-radius:50%;}
+  .prod-val{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text-hi);}
+
+  /* Shift downtime tally */
+  .downtime-tally{background:var(--bg-2);border-radius:12px;border:1px solid var(--steel-line);padding:14px;}
+  .tally-title{font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;font-weight:600;}
+  .tally-count{font-size:24px;font-weight:600;color:var(--warn);}
+  .tally-note{font-family:var(--mono);font-size:9px;color:var(--text-low);margin-top:2px;font-weight:500;}
+
+  /* ---- Action zone (right): idle state big display OR downtime popup ---- */
+  .action-zone{
+    position:relative;
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;
+    overflow-y:auto;
+    background:radial-gradient(circle at 50% 30%, rgba(87,148,242,0.03), transparent 60%);
+  }
+
+  /* Idle big display */
+  .idle-display{
+    text-align:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .center-state-box{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:32px 56px;border-radius:20px;
+    background:var(--bg-1);border:1px solid var(--steel-line);
+    box-shadow:var(--card-shadow);
+    transition:all 0.3s ease;
+    min-width:360px;
+    margin-bottom:24px;
+  }
+  .center-state-box.state-run{
+    border-color:rgba(115,191,105,0.4);
+    background:radial-gradient(circle at 50% 30%, rgba(115,191,105,0.12), var(--bg-1) 75%);
+  }
+  .center-state-box.state-down{
+    border-color:rgba(242,73,92,0.4);
+    background:radial-gradient(circle at 50% 30%, rgba(242,73,92,0.12), var(--bg-1) 75%);
+  }
+  .center-state-icon{
+    width:72px;height:72px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:32px;margin-bottom:14px;
+    background:var(--bg-2);
+  }
+  .state-run .center-state-icon{
+    background:rgba(115,191,105,0.2);color:var(--good);
+    border:2px solid var(--good);
+    box-shadow:0 0 24px rgba(115,191,105,0.3);
+  }
+  .state-down .center-state-icon{
+    background:rgba(242,73,92,0.2);color:var(--bad);
+    border:2px solid var(--bad);
+    box-shadow:0 0 24px rgba(242,73,92,0.3);
+    animation:blink 1s step-start infinite;
+  }
+  .center-state-label{font-size:28px;font-weight:600;letter-spacing:0.04em;margin-bottom:4px;}
+  .state-run .center-state-label{color:var(--good);}
+  .state-down .center-state-label{color:var(--bad);}
+  .center-state-sub{font-family:var(--mono);font-size:12px;color:var(--text-low);font-weight:500;}
+
+  .idle-display .speed-live{
+    display:inline-flex;gap:36px;
+    padding:18px 40px;background:var(--bg-1);
+    border:1px solid var(--steel-line);border-radius:16px;
+    box-shadow:var(--card-shadow);
+  }
+  .speed-stat{text-align:center;}
+  .speed-stat-val{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text-hi);}
+  .speed-stat-label{font-family:var(--mono);font-size:9px;color:var(--text-low);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;}
+
+  /* ===================== DOWNTIME POPUP (full attention) ===================== */
+  .popup-overlay{
+    position:absolute;inset:0;
+    background:rgba(15,23,42,0.4);
+    backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;
+    animation:fadeIn .25s ease;
+  }
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+  .popup{
+    width:100%;max-width:720px;max-height:92%;
+    background:var(--bg-1);
+    border:1px solid var(--bad);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 12px 40px rgba(0,0,0,0.5);
+    display:flex;flex-direction:column;
+    animation:popIn .3s cubic-bezier(.2,.9,.3,1.3);
+  }
+  @keyframes popIn{from{transform:scale(0.95);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+  .popup-head{
+    padding:20px 24px 16px;
+    background:linear-gradient(180deg, rgba(242,73,92,0.12), transparent);
+    border-bottom:1px solid var(--steel-line);
+    flex-shrink:0;
+  }
+  .popup-head-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .popup-alert{
+    display:flex;align-items:center;gap:8px;
+    font-family:var(--mono);font-size:11px;font-weight:600;color:var(--bad);
+    text-transform:uppercase;letter-spacing:0.06em;
+  }
+  .popup-alert .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--bad);animation:blink 0.9s step-start infinite;}
+  .popup-timer{
+    font-family:var(--mono);font-size:18px;font-weight:600;color:var(--text-hi);
+    background:var(--bg-2);padding:5px 14px;border-radius:6px;
+    font-variant-numeric:tabular-nums;border:1px solid var(--bad);
+  }
+  .popup-title{font-size:20px;font-weight:600;margin-bottom:2px;letter-spacing:-0.01em;color:var(--text-hi);}
+  .popup-sub{font-family:var(--mono);font-size:11px;color:var(--text-mid);font-weight:500;}
+
+  .popup-body{padding:20px 24px 10px;overflow-y:auto;flex:1;}
+
+  .p-field-label{
+    font-family:var(--mono);font-size:10px;color:var(--text-low);
+    text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;
+    display:flex;align-items:center;gap:6px;font-weight:600;
+  }
+  .p-req{color:var(--bad);}
+
+  .p-category-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+  .p-cat-btn{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:14px 8px;
+    background:var(--bg-2);border:1px solid var(--steel-line);border-radius:10px;
+    color:var(--text-mid);font-size:11px;font-weight:600;text-align:center;
+    cursor:pointer;transition:all .15s ease;
+    min-height:80px;justify-content:center;
+  }
+  .p-cat-btn .p-cat-icon{font-size:22px;}
+  .p-cat-btn.active{border-color:var(--ember);background:rgba(87,148,242,0.12);color:var(--ember);}
+
+  .p-reason-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .p-reason-btn{
+    display:flex;align-items:center;gap:10px;
+    padding:14px 16px;
+    background:var(--bg-2);border:1px solid var(--steel-line);border-radius:8px;
+    color:var(--text-hi);font-size:13px;font-weight:500;cursor:pointer;
+    transition:all .15s ease;text-align:left;
+  }
+  .p-reason-btn.active{border-color:var(--ember);background:rgba(87,148,242,0.12);color:var(--ember);}
+  .p-check{
+    width:20px;height:20px;border-radius:50%;border:1.5px solid var(--steel-line);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#FFFFFF;
+  }
+  .p-reason-btn.active .p-check{border-color:var(--ember);background:var(--ember);}
+
+  .p-reason-other{
+    grid-column:1/-1;
+    border-style:dashed;color:var(--text-mid);justify-content:center;
+  }
+
+  .p-freetext{margin-top:6px;margin-bottom:16px;max-height:0;overflow:hidden;transition:max-height .25s ease;}
+  .p-freetext.open{max-height:120px;}
+  .p-textarea{
+    width:100%;min-height:90px;background:var(--bg-2);border:1px solid var(--ember);border-radius:8px;
+    padding:12px;color:var(--text-hi);font-family:var(--sans);font-size:13px;resize:none;outline:none;
+  }
+
+  .popup-footer{
+    padding:16px 24px 20px;display:flex;gap:12px;
+    border-top:1px solid var(--steel-line);flex-shrink:0;
+  }
+  .p-btn{flex:1;padding:14px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all 0.2s ease;}
+  .p-btn-secondary{background:var(--bg-2);color:var(--text-mid);border:1px solid var(--steel-line);}
+  .p-btn-secondary:hover{background:var(--bg-3);color:var(--text-hi);}
+  .p-btn-primary{background:linear-gradient(135deg,#5794F2,#3871E0);color:#FFFFFF;box-shadow:0 3px 10px rgba(87,148,242,0.25);}
+  .p-btn-primary:disabled{background:var(--bg-2);color:var(--text-low);cursor:not-allowed;box-shadow:none;}
+
+  /* ---- Footer: hardware-style buttons ---- */
+  .hmi-footer{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 28px;background:var(--bg-1);
+    border-top:1px solid var(--steel-line);
+  }
+  .hw-btns{display:flex;gap:10px;}
+  .hw-btn{
+    font-family:var(--mono);font-size:11px;font-weight:600;
+    padding:10px 18px;border-radius:8px;border:1px solid var(--steel-line);
+    background:var(--bg-2);color:var(--text-mid);cursor:pointer;letter-spacing:0.02em;
+    transition:all 0.2s ease;
+  }
+  .hw-btn:hover{background:var(--bg-3);color:var(--text-hi);border-color:var(--ember);}
+  .hw-btn.estop{border-color:rgba(242,73,92,0.4);color:var(--bad);background:rgba(242,73,92,0.12);}
+  .hw-btn.estop:hover{background:var(--bad);color:#FFFFFF;}
+  ::placeholder{color:var(--text-low);}
+</style>
+</head>
+<body>
+
+<div class="hmi">
+
+  <div class="hmi-header">
+    <div class="hmi-id">
+      <div class="hmi-id-badge">FA</div>
+      <div class="hmi-id-text">
+        <div class="name">FILLER UNIT A</div>
+        <div class="line">LINE 2 · FILLING STATION · WM TRAINING</div>
+      </div>
+    </div>
+    <div class="hmi-header-right">
+      <div class="conn-status"><span class="conn-dot"></span> PLC CONNECTED</div>
+      <div class="hmi-clock" id="hmiClock">06:00:00</div>
+    </div>
+  </div>
+
+  <div class="hmi-body">
+
+    <div class="status-col">
+      <div class="oee-mini">
+        <div class="oee-mini-label">OEE Mesin Ini</div>
+        <div class="oee-mini-val" id="miniOeeVal" style="color:#E8763B;">88%</div>
+        <div class="oee-mini-target" id="miniOeeTarget">Target 82%</div>
+        <div class="oee-mini-bars">
+          <div class="oee-mini-bar">
+            <div class="oee-mini-bar-track"><div class="oee-mini-bar-fill" id="miniAvailBar" style="width:90%;background:linear-gradient(90deg,#F59E0B,#FBBF24);"></div></div>
+            <div class="oee-mini-bar-val" id="miniAvailVal">90%</div>
+            <div class="oee-mini-bar-label">A</div>
+          </div>
+          <div class="oee-mini-bar">
+            <div class="oee-mini-bar-track"><div class="oee-mini-bar-fill" id="miniPerfBar" style="width:94%;background:linear-gradient(90deg,#FF6B00,#FF8800);"></div></div>
+            <div class="oee-mini-bar-val" id="miniPerfVal">94%</div>
+            <div class="oee-mini-bar-label">P</div>
+          </div>
+          <div class="oee-mini-bar">
+            <div class="oee-mini-bar-track"><div class="oee-mini-bar-fill" id="miniQualBar" style="width:99%;background:linear-gradient(90deg,#10B981,#34D399);"></div></div>
+            <div class="oee-mini-bar-val" id="miniQualVal">99%</div>
+            <div class="oee-mini-bar-label">Q</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prod-block">
+        <div class="prod-row">
+          <div class="prod-label"><span class="prod-dot" style="background:#5FB78C;"></span> Good Parts</div>
+          <div class="prod-val" id="goodVal">0</div>
+        </div>
+        <div class="prod-row">
+          <div class="prod-label"><span class="prod-dot" style="background:#D9524A;"></span> Reject</div>
+          <div class="prod-val" id="rejectVal">0</div>
+        </div>
+        <div class="prod-row">
+          <div class="prod-label"><span class="prod-dot" style="background:#E8763B;"></span> Speed Aktual</div>
+          <div class="prod-val" id="speedVal">0 <span style="font-size:10px;color:var(--text-low);">cpm</span></div>
+        </div>
+      </div>
+
+      <div class="downtime-tally">
+        <div class="tally-title">Downtime Shift Ini</div>
+        <div class="tally-count" id="tallyCount">0</div>
+        <div class="tally-note" id="tallyNote">Belum ada insiden tercatat</div>
+      </div>
+    </div>
+
+    <div class="action-zone" id="actionZone">
+      <div class="idle-display" id="idleDisplay">
+        <div class="center-state-box state-run" id="centerStateBox">
+          <div class="center-state-icon" id="centerStateIcon">▶</div>
+          <div class="center-state-label" id="centerStateLabel">RUNNING</div>
+          <div class="center-state-sub" id="centerStateSub">Mesin Berjalan Normal</div>
+        </div>
+        <div class="speed-live">
+          <div class="speed-stat"><div class="speed-stat-val" id="cycleVal">0</div><div class="speed-stat-label">Ideal cpm</div></div>
+          <div class="speed-stat"><div class="speed-stat-val" id="uptimeVal">00:00:00</div><div class="speed-stat-label">Uptime Shift</div></div>
+          <div class="speed-stat"><div class="speed-stat-val" id="opVal">Budi S.</div><div class="speed-stat-label">Operator</div></div>
+        </div>
+      </div>
+      <!-- popup injected here -->
+    </div>
+
+  </div>
+
+  <div class="hmi-footer">
+    <div class="hw-btns">
+      <button class="hw-btn" onclick="simulateManualStop()">⏸ SIMULASI STOP</button>
+      <button class="hw-btn" onclick="resetShift()">↺ RESET SHIFT</button>
+    </div>
+    <div class="footer-note">WM — TRAINING · HMI PANEL MOCKUP · FILLER UNIT A · IEC 61131 STYLE REFERENCE</div>
+    <div class="hw-btns">
+      <button class="hw-btn estop" onclick="triggerEStop()">⏻ E-STOP</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const CATEGORIES = [
+  { id:'mesin', label:'Kerusakan\\nMesin', icon:'⚙️', planned:false },
+  { id:'planned', label:'Planned\\n(CIP/Ganti)', icon:'🧼', planned:true },
+  { id:'material', label:'Material/\\nBahan Baku', icon:'📦', planned:false },
+  { id:'quality', label:'Quality\\nCheck', icon:'🔍', planned:false },
+];
+const REASON_PRESETS = {
+  mesin: ['Nozzle filler tersumbat','Sensor level cairan error','Conveyor macet / jam botol','Kebocoran seal / valve'],
+  planned: ['CIP / Sanitasi rutin','Changeover ukuran kemasan','Ganti varian produk','Preventive maintenance terjadwal'],
+  material: ['Stok botol/kemasan kosong','Bahan baku belum datang','Label salah cetak','Kualitas bahan baku reject'],
+  quality: ['Sampling QC berkala','Hasil produk di luar spek','Kalibrasi alat ukur','Investigasi komplain'],
+};
+const SHIFT_START = 6*3600;
+const SYNC_KEY = 'wm-oee-shared-state-v1';
+
+// Which machine this HMI panel represents — from ?machine=<id> in the URL,
+// default to filler-a if opened directly without the dashboard.
+const params = new URLSearchParams(window.location.search);
+const MACHINE_ID = params.get('machine') || 'filler-a';
+
+const MACHINE_DEFAULTS = {
+  'filler-a': { name:'Filler Unit A', line:'Line 2 · Filling', idealCpm:60, badge:'FA' },
+  'capper': { name:'Capping Machine', line:'Line 2 · Packaging', idealCpm:55, badge:'CP' },
+  'labeler': { name:'Labeler Unit', line:'Line 2 · Packaging', idealCpm:58, badge:'LB' },
+  'cartoner': { name:'Cartoner', line:'Line 2 · Secondary Pack', idealCpm:40, badge:'CT' },
+};
+const machineMeta = MACHINE_DEFAULTS[MACHINE_ID] || MACHINE_DEFAULTS['filler-a'];
+document.title = `HMI — ${machineMeta.name}`;
+
+// Local UI-only state (form inputs while filling the popup)
+let uiState = {
+  form: { category:'mesin', reason: REASON_PRESETS.mesin[0], other:'', isOther:false },
+};
+
+// Shared state mirror, pulled from localStorage each tick. This HMI tab
+// does NOT run its own production simulation — the dashboard tab is the
+// leader. If no dashboard has ever written state yet, we fall back to a
+// minimal local-only simulation so this file still works standalone.
+let shared = null;
+let standaloneFallback = {
+  clockSec: SHIFT_START,
+  machines: Object.keys(MACHINE_DEFAULTS).map(id => ({
+    id, name: MACHINE_DEFAULTS[id].name, line: MACHINE_DEFAULTS[id].line,
+    status:'run', idealCyclesPerMin: MACHINE_DEFAULTS[id].idealCpm,
+    goodCount:0, rejectCount:0, runSec:0,
+  })),
+  events: [],
+  activeStop: null,
+};
+let usingFallback = false;
+let seed = 7;
+function rand(){ seed=(seed*9301+49297)%233280; return seed/233280; }
+
+function fmtClock(s){
+  s=Math.max(0,Math.floor(s));
+  const h=String(Math.floor(s/3600)%24).padStart(2,'0');
+  const m=String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const sec=String(s%60).padStart(2,'0');
+  return `${h}:${m}:${sec}`;
+}
+
+function readSharedState(){
+  try{
+    const raw = localStorage.getItem(SYNC_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && Array.isArray(parsed.machines)){
+        usingFallback = false;
+        return parsed;
+      }
+    }
+  }catch(e){}
+  usingFallback = true;
+  return standaloneFallback;
+}
+
+// Real-time multi-tab synchronization channel
+const bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('wm-oee-sync-v1') : null;
+if(bc){
+  bc.onmessage = (e) => {
+    if(e.data && e.data.type === 'sync'){
+      render();
+    }
+  };
+}
+
+function writeSharedState(next){
+  try{
+    const payload = { ...next, savedAt: Date.now() };
+    localStorage.setItem(SYNC_KEY, JSON.stringify(payload));
+    if(bc) bc.postMessage({ type: 'sync', state: payload });
+  }catch(e){}
+}
+
+function getMyMachine(s){
+  return s.machines.find(m=>m.id===MACHINE_ID) || s.machines[0];
+}
+function getMyActiveStop(s){
+  return (s.activeStop && s.activeStop.machineId===MACHINE_ID) ? s.activeStop : null;
+}
+function getMyEvents(s){
+  return s.events.filter(e=>e.machineId===MACHINE_ID);
+}
+
+function computeOee(s, mac){
+  const elapsedSec = Math.max(1, s.clockSec - SHIFT_START);
+  const myEvents = getMyEvents(s);
+  const myActiveStop = getMyActiveStop(s);
+
+  let plannedSec = 0;
+  let unplannedSec = 0;
+
+  myEvents.forEach(e => {
+    if(e.start <= s.clockSec){
+      const eventEnd = Math.min(s.clockSec, e.end || s.clockSec);
+      const dur = Math.max(0, eventEnd - e.start);
+      if(e.plannedFlag) plannedSec += dur;
+      else unplannedSec += dur;
+    }
+  });
+
+  if(myActiveStop){
+    const activeDur = Math.max(0, s.clockSec - myActiveStop.startClock);
+    const cat = CATEGORIES.find(c=>c.id===(uiState.form.category || 'mesin'));
+    if(cat && cat.planned) plannedSec += activeDur;
+    else unplannedSec += activeDur;
+  }
+
+  const totalDownSec = plannedSec + unplannedSec;
+  const netOperatingSec = Math.max(0, elapsedSec - totalDownSec);
+  const plannedOperatingSec = Math.max(1, elapsedSec - plannedSec);
+
+  const availability = (netOperatingSec / plannedOperatingSec) * 100;
+
+  const idealCyclesPerSec = (mac.idealCyclesPerMin || 60) / 60;
+  const totalProduced = (mac.goodCount || 0) + (mac.rejectCount || 0);
+  const expectedProduced = (mac.runSec || 0) * idealCyclesPerSec;
+
+  const performance = mac.runSec > 0 ? (totalProduced / (expectedProduced || 1)) * 100 : 91;
+  const quality = totalProduced > 0 ? (mac.goodCount / totalProduced) * 100 : 100;
+  const oee = (availability / 100) * (performance / 100) * (quality / 100) * 100;
+
+  return {
+    availability: isNaN(availability) ? 0 : Math.min(100, Math.max(0, availability)),
+    performance: isNaN(performance) ? 0 : Math.min(100, Math.max(0, performance)),
+    quality: isNaN(quality) ? 100 : Math.min(100, Math.max(0, quality)),
+    oee: isNaN(oee) ? 0 : Math.min(100, Math.max(0, oee))
+  };
+}
+
+let lastPopupStateKey = null;
+
+function render(){
+  shared = readSharedState();
+  const mac = getMyMachine(shared);
+  const myActiveStop = getMyActiveStop(shared);
+  const myEvents = getMyEvents(shared);
+
+  // reflect real machine identity in header (in case URL points to a different machine than default)
+  document.querySelector('.hmi-id-badge').textContent = machineMeta.badge;
+  document.querySelector('.hmi-id-text .name').textContent = mac.name.toUpperCase();
+  document.querySelector('.hmi-id-text .line').textContent = mac.line.toUpperCase() + ' · WM TRAINING';
+  document.getElementById('opVal').textContent = 'Budi S.';
+
+  document.getElementById('hmiClock').textContent = fmtClock(shared.clockSec);
+
+  const box = document.getElementById('centerStateBox');
+  const icon = document.getElementById('centerStateIcon');
+  const label = document.getElementById('centerStateLabel');
+  const sub = document.getElementById('centerStateSub');
+  if(box && icon && label && sub){
+    if(mac.status==='run'){
+      box.className='center-state-box state-run';
+      icon.textContent='▶'; label.textContent='RUNNING'; sub.textContent='Mesin Berjalan Normal';
+    } else {
+      box.className='center-state-box state-down';
+      icon.textContent='⏸'; label.textContent='STOPPED'; sub.textContent='Menunggu Input Downtime';
+    }
+  }
+
+  const m = computeOee(shared, mac);
+  const oeeEl = document.getElementById('miniOeeVal');
+  oeeEl.textContent = m.oee.toFixed(0)+'%';
+  oeeEl.style.color = m.oee>=82?'var(--good)':(m.oee>=65?'var(--warn)':'var(--bad)');
+  document.getElementById('miniOeeTarget').textContent = m.oee>=82 ? '▲ Di atas target 82%' : '▼ Target 82%';
+  document.getElementById('miniAvailVal').textContent = m.availability.toFixed(0)+'%';
+  document.getElementById('miniAvailBar').style.width = Math.min(100,m.availability)+'%';
+  document.getElementById('miniPerfVal').textContent = m.performance.toFixed(0)+'%';
+  document.getElementById('miniPerfBar').style.width = Math.min(100,m.performance)+'%';
+  document.getElementById('miniQualVal').textContent = m.quality.toFixed(0)+'%';
+  document.getElementById('miniQualBar').style.width = Math.min(100,m.quality)+'%';
+
+  document.getElementById('goodVal').textContent = Math.round(mac.goodCount);
+  document.getElementById('rejectVal').textContent = Math.round(mac.rejectCount);
+  const speedNow = mac.status==='run' ? Math.round(mac.idealCyclesPerMin * (0.9+rand()*0.08)) : 0;
+  document.getElementById('speedVal').innerHTML = speedNow+' <span style="font-size:10px;color:var(--text-low);">cpm</span>';
+
+  document.getElementById('tallyCount').textContent = myEvents.length;
+  document.getElementById('tallyNote').textContent = myEvents.length===0
+    ? 'Belum ada insiden tercatat'
+    : `Total ${Math.round(myEvents.reduce((a,e)=>a+(e.end-e.start),0)/60)} menit downtime`;
+
+  document.getElementById('cycleVal').textContent = mac.idealCyclesPerMin;
+  document.getElementById('uptimeVal').textContent = fmtClock(mac.runSec);
+
+  renderActionZone(shared, mac, myActiveStop);
+}
+
+function renderActionZone(s, mac, myActiveStop){
+  const zone = document.getElementById('actionZone');
+  const existingPopup = document.getElementById('downtimePopupOverlay');
+  const idle = document.getElementById('idleDisplay');
+
+  const isSnoozed = myActiveStop && myActiveStop.snoozedUntil && s.clockSec < myActiveStop.snoozedUntil;
+
+  if(myActiveStop && !isSnoozed){
+    idle.style.display='none';
+    const elapsed = s.clockSec - myActiveStop.startClock;
+    const currentKey = `${myActiveStop.startClock}_${uiState.form.category}_${uiState.form.isOther}_${uiState.form.reason}`;
+
+    if(!existingPopup){
+      const div = document.createElement('div');
+      div.id='downtimePopupOverlay';
+      div.className='popup-overlay';
+      div.innerHTML = renderPopup(s, mac, myActiveStop);
+      zone.appendChild(div);
+      lastPopupStateKey = currentKey;
+    } else {
+      if(lastPopupStateKey !== currentKey){
+        existingPopup.innerHTML = renderPopup(s, mac, myActiveStop);
+        lastPopupStateKey = currentKey;
+      } else {
+        // Smart update only the timer text so input field doesn't lose focus
+        const timerEl = existingPopup.querySelector('.popup-timer');
+        if(timerEl) timerEl.textContent = fmtClock(elapsed);
+      }
+    }
+  } else {
+    idle.style.display='block';
+    if(existingPopup){
+      existingPopup.remove();
+      lastPopupStateKey = null;
+    }
+  }
+}
+
+function renderPopup(s, mac, activeStop){
+  const elapsed = s.clockSec - activeStop.startClock;
+  const reasons = REASON_PRESETS[uiState.form.category] || [];
+  const canSubmit = uiState.form.isOther ? uiState.form.other.trim().length>0 : !!uiState.form.reason;
+
+  return `
+    <div class="popup">
+      <div class="popup-head">
+        <div class="popup-head-top">
+          <div class="popup-alert"><span class="pulse-dot"></span> Mesin Berhenti Terdeteksi</div>
+          <div class="popup-timer">${fmtClock(elapsed)}</div>
+        </div>
+        <div class="popup-title">${activeStop.isEStop ? '🚨 EMERGENCY STOP (E-STOP)' : 'Kenapa mesin berhenti?'}</div>
+        <div class="popup-sub">${escapeHtml(mac.name)} · Terhenti pukul <b>${fmtClock(activeStop.startClock)}</b></div>
+      </div>
+      <div class="popup-body">
+        <div class="p-field-label">Kategori Downtime <span class="p-req">*wajib</span></div>
+        <div class="p-category-grid">
+          ${CATEGORIES.map(cat=>`
+            <button class="p-cat-btn ${uiState.form.category===cat.id?'active':''}" onclick="selectCategory('${cat.id}')">
+              <span class="p-cat-icon">${cat.icon}</span>
+              <span>${cat.label.replace('\\n','<br>')}</span>
+            </button>`).join('')}
+        </div>
+        <div class="p-field-label">Detail Penyebab <span class="p-req">*wajib</span></div>
+        <div class="p-reason-grid">
+          ${reasons.map(r=>`
+            <button class="p-reason-btn ${!uiState.form.isOther && uiState.form.reason===r?'active':''}" onclick="selectReason('${escapeAttr(r)}')">
+              <span class="p-check">${!uiState.form.isOther && uiState.form.reason===r?'✓':''}</span>
+              <span>${escapeHtml(r)}</span>
+            </button>`).join('')}
+          <button class="p-reason-btn p-reason-other ${uiState.form.isOther?'active':''}" onclick="toggleOther()">
+            <span class="p-check">${uiState.form.isOther?'✓':''}</span>
+            <span>Lainnya — tulis manual</span>
+          </button>
+        </div>
+        <div class="p-freetext ${uiState.form.isOther?'open':''}">
+          <textarea class="p-textarea" placeholder="Jelaskan penyebab downtime secara singkat..." oninput="updateOtherText(this.value)">${escapeHtml(uiState.form.other)}</textarea>
+        </div>
+      </div>
+      <div class="popup-footer">
+        <button class="p-btn p-btn-secondary" onclick="snoozeDowntime()">Tunda 5 Menit</button>
+        <button class="p-btn p-btn-primary" ${canSubmit?'':'disabled'} onclick="submitDowntime()">Konfirmasi &amp; Lanjut Produksi</button>
+      </div>
+    </div>`;
+}
+
+function escapeHtml(str){
+  if(str === null || str === undefined) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function escapeAttr(s){
+  if(!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function selectCategory(catId){
+  uiState.form.category=catId; uiState.form.reason=REASON_PRESETS[catId][0]; uiState.form.isOther=false;
+  render();
+}
+function selectReason(r){
+  uiState.form.reason=r; uiState.form.isOther=false;
+  render();
+}
+function toggleOther(){
+  uiState.form.isOther=true;
+  render();
+}
+function updateOtherText(v){
+  uiState.form.other=v;
+  const btn=document.querySelector('.p-btn-primary');
+  if(btn){ const can=v.trim().length>0; btn.disabled=!can; }
+}
+function submitDowntime(){
+  const s = readSharedState();
+  const mac = getMyMachine(s);
+  const activeStop = getMyActiveStop(s);
+  if(!activeStop) return;
+
+  const cat = CATEGORIES.find(c=>c.id===uiState.form.category);
+  const reasonText = uiState.form.isOther ? (uiState.form.other.trim()||'Lainnya (tanpa detail)') : uiState.form.reason;
+
+  const newEvent = {
+    id:'evt-'+Date.now(),
+    machineId: MACHINE_ID,
+    machineName: mac.name,
+    categoryId: cat.id, categoryLabel: cat.label.replace('\\n',' '), categoryIcon: cat.icon, plannedFlag: cat.planned,
+    reason: reasonText, isOther: uiState.form.isOther,
+    start: activeStop.startClock, end: s.clockSec,
+    status: 'pending', operator: 'Budi S.',
+  };
+  s.events.unshift(newEvent);
+  mac.status = 'run';
+  if(s.activeStop && s.activeStop.machineId===MACHINE_ID) s.activeStop = null;
+
+  writeSharedState(s);
+  uiState.form = { category:'mesin', reason:REASON_PRESETS.mesin[0], other:'', isOther:false };
+  render();
+}
+function snoozeDowntime(){
+  const s = readSharedState();
+  if(s.activeStop && s.activeStop.machineId===MACHINE_ID){
+    s.activeStop.snoozedUntil = s.clockSec+5;
+    writeSharedState(s);
+  }
+  render();
+}
+function simulateManualStop(){
+  const s = readSharedState();
+  const mac = getMyMachine(s);
+  if(s.activeStop) return; // one active stop across the whole line at a time (matches dashboard logic)
+  mac.status = 'down';
+  s.activeStop = { machineId: MACHINE_ID, machineName: mac.name, startClock: s.clockSec };
+  writeSharedState(s);
+  uiState.form = { category:'mesin', reason:REASON_PRESETS.mesin[0], other:'', isOther:false };
+  render();
+}
+function triggerEStop(){
+  const s = readSharedState();
+  const mac = getMyMachine(s);
+  mac.status = 'down';
+  s.activeStop = { machineId: MACHINE_ID, machineName: mac.name, startClock: s.clockSec, isEStop: true };
+  uiState.form = { category:'mesin', reason:'EMERGENCY STOP (E-STOP) DIPICU', other:'', isOther:false };
+  writeSharedState(s);
+  render();
+}
+function resetShift(){
+  writeSharedState(standaloneFallback);
+  render();
+}
+
+// Poll shared state every second
+setInterval(render, 1000);
+
+// Standalone fallback tick
+setInterval(()=>{
+  if(!usingFallback) return;
+  const SHIFT_END = SHIFT_START + (8 * 3600);
+  if(standaloneFallback.clockSec >= SHIFT_END){
+    standaloneFallback.clockSec = SHIFT_END;
+    return;
+  }
+  standaloneFallback.clockSec += 1;
+  const mac = standaloneFallback.machines.find(m=>m.id===MACHINE_ID);
+  if(mac && mac.status==='run'){
+    const cyclesPerSec = mac.idealCyclesPerMin/60;
+    const produced = cyclesPerSec*(0.85+rand()*0.12);
+    mac.runSec += 1;
+    if(rand()<0.01) mac.rejectCount+=produced; else mac.goodCount+=produced;
+  }
+  writeSharedState(standaloneFallback);
+}, 1000);
+
+render();
+</script>
+</body>
+</html>
