@@ -1241,7 +1241,7 @@ function renderGanttChart(){
     `;
 
     blocks.forEach(b => {
-      const dur = Math.max(1, b.end - b.start);
+      const dur = Math.max(0, b.end - b.start);
       const pct = (dur / SHIFT_DURATION) * 100;
       let bg = 'rgba(115,191,105,0.75)';
       let labelText = '';
@@ -1260,8 +1260,10 @@ function renderGanttChart(){
         tooltipText = `${fmtClock(b.start)} - 14:00:00 (Sisa Waktu Shift B)`;
       }
 
+      const padStyle = pct > 2 ? 'padding:0 6px;' : 'padding:0;';
+
       html += `
-        <div class="gantt-block" title="${tooltipText}" style="width:${pct.toFixed(2)}%;height:100%;background:${bg};border-right:1px solid var(--bg-0);display:flex;align-items:center;padding:0 6px;font-family:var(--mono);font-size:9px;color:#FFF;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:${b.type==='future'?'default':'pointer'};" ${b.type==='future'?'':`onclick="openMachineDrilldown('${mac.id}')"`}>
+        <div class="gantt-block" title="${tooltipText}" style="width:${pct.toFixed(4)}%;min-width:0;flex-shrink:0;height:100%;background:${bg};border-right:${pct>0.1?'1px solid var(--bg-0)':'none'};display:flex;align-items:center;${padStyle}font-family:var(--mono);font-size:9px;color:#FFF;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:${b.type==='future'?'default':'pointer'};" ${b.type==='future'?'':`onclick="openMachineDrilldown('${mac.id}')"`}>
           ${labelText}
         </div>
       `;
