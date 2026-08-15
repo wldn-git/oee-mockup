@@ -332,7 +332,7 @@
       <div class="hmi-id-badge">FA</div>
       <div class="hmi-id-text">
         <div class="name">FILLER UNIT A</div>
-        <div class="line">LINE 2 · FILLING STATION · WM TRAINING</div>
+        <div class="line">LINE 2 · FILLING STATION · SMARTEK TRAINING</div>
       </div>
     </div>
     <div class="hmi-header-right">
@@ -412,7 +412,7 @@
       <button class="hw-btn" onclick="simulateManualStop()">⏸ SIMULASI STOP</button>
       <button class="hw-btn" onclick="resetShift()">↺ RESET SHIFT</button>
     </div>
-    <div class="footer-note">WM — TRAINING · HMI PANEL MOCKUP · FILLER UNIT A · IEC 61131 STYLE REFERENCE</div>
+    <div class="footer-note">SMARTEK — TRAINING · HMI PANEL MOCKUP · FILLER UNIT A · IEC 61131 STYLE REFERENCE</div>
     <div class="hw-btns">
       <button class="hw-btn estop" onclick="triggerEStop()">⏻ E-STOP</button>
     </div>
@@ -585,7 +585,7 @@ function render(){
   // reflect real machine identity in header (in case URL points to a different machine than default)
   document.querySelector('.hmi-id-badge').textContent = machineMeta.badge;
   document.querySelector('.hmi-id-text .name').textContent = mac.name.toUpperCase();
-  document.querySelector('.hmi-id-text .line').textContent = mac.line.toUpperCase() + ' · WM TRAINING';
+  document.querySelector('.hmi-id-text .line').textContent = mac.line.toUpperCase() + ' · SMARTEK TRAINING';
   document.getElementById('opVal').textContent = 'Budi S.';
 
   document.getElementById('hmiClock').textContent = fmtClock(shared.clockSec) + (isShiftEnded ? ' (SELESAI)' : '');
