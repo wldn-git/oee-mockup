@@ -416,7 +416,7 @@
 
 <div class="tabnav">
   <button class="tab-btn active" id="tabBtnDashboard" onclick="showTab('dashboard', this)">📊 Dashboard OEE</button>
-  <button class="tab-btn" id="tabBtnEntry" onclick="showTab('entry', this)">⚠️ Downtime Entry <span class="badge" id="pendingBadge" style="display:none;">0</span></button>
+  <button class="tab-btn" id="tabBtnEntry" onclick="showTab('entry', this)">📋 Management Downtime <span class="badge" id="pendingBadge" style="display:none;">0</span></button>
 </div>
 
 <!-- ============ VIEW 1: DASHBOARD ============ -->
@@ -670,17 +670,11 @@
   </div>
 </div>
 
-<!-- ============ VIEW 2: DOWNTIME ENTRY ============ -->
+<!-- ============ VIEW 2: DOWNTIME MANAGEMENT & VALIDATION ============ -->
 <div class="view" id="view-entry">
   <div class="entry-stage">
-    <div style="width:100%;max-width:640px;">
-      <div class="role-toggle">
-        <button class="role-btn active" id="roleBtnOperator" onclick="showRole('operator', this)">👷 Operator</button>
-        <button class="role-btn" id="roleBtnSvp" onclick="showRole('svp', this)">🧑‍💼 SVP / Supervisor</button>
-      </div>
-
-      <div id="operatorView"></div>
-      <div id="svpView" style="display:none;"></div>
+    <div style="width:100%;max-width:960px;">
+      <div id="downtimeManagementView"></div>
     </div>
   </div>
 </div>
@@ -1526,48 +1520,9 @@ function updateEventCategory(eventId, catId){
 }
 
 function renderEntryView(){
-  const opEl = document.getElementById('operatorView');
-  const svpEl = document.getElementById('svpView');
-
-  if(state.role==='operator'){
-    opEl.style.display='block'; svpEl.style.display='none';
-    const isSnoozed = state.activeStop && state.activeStop.snoozedUntil && state.clockSec < state.activeStop.snoozedUntil;
-    if(state.activeStop && !isSnoozed){
-      const elapsed = state.clockSec - state.activeStop.startClock;
-      const currentKey = `${state.activeStop.startClock}_${state.form.category}_${state.form.isOther}_${state.form.reason}`;
-
-      const existingModal = opEl.querySelector('.modal');
-      if(!existingModal || lastOpModalStateKey !== currentKey){
-        opEl.innerHTML = renderOperatorModal();
-        lastOpModalStateKey = currentKey;
-      } else {
-        // Smart update timer text to avoid clearing input field focus
-        const timerEl = existingModal.querySelector('.timer');
-        if(timerEl) timerEl.textContent = fmtClock(elapsed);
-      }
-    } else {
-      lastOpModalStateKey = null;
-      opEl.innerHTML = `
-        <div style="background:var(--bg-1);border:1px solid var(--steel-line);border-radius:20px;padding:40px 28px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.06);">
-          <div style="font-size:42px;margin-bottom:12px;">${isSnoozed?'⏳':'✅'}</div>
-          <div style="font-size:18px;font-weight:800;margin-bottom:6px;color:var(--text-hi);">${isSnoozed?'Downtime Ditunda 5 Menit':'Semua Mesin Berjalan Normal'}</div>
-          <div style="font-family:var(--mono);font-size:12px;color:var(--text-low);margin-bottom:24px;">${isSnoozed ? `${escapeHtml(state.activeStop.machineName)} masih dalam penundaan.` : 'Form pengisian downtime akan terbuka otomatis saat mesin terdeteksi berhenti.'}</div>
-          
-          <div style="border-top:1px solid var(--steel-line);padding-top:24px;margin-top:12px;">
-            <div style="font-family:var(--mono);font-size:11px;color:var(--text-mid);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:14px;">Simulasi Manual: Hentikan Mesin untuk Uji Form</div>
-            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-              ${state.machines.map(m=>`
-                <button class="btn btn-secondary" style="flex:none;padding:10px 16px;font-size:12px;font-weight:700;" onclick="triggerManualStopFromDashboard('${m.id}')">
-                  ⏸ Stop ${escapeHtml(m.name)}
-                </button>`).join('')}
-            </div>
-          </div>
-        </div>`;
-    }
-  } else {
-    lastOpModalStateKey = null;
-    opEl.style.display='none'; svpEl.style.display='block';
-    svpEl.innerHTML = renderSvpPanel();
+  const container = document.getElementById('downtimeManagementView');
+  if(container){
+    container.innerHTML = renderSvpPanel();
   }
 }
 
