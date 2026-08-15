@@ -1168,6 +1168,9 @@ function renderGanttChart(){
     const macEvents = (state.events || []).filter(e => e.machineId === mac.id && e.start <= state.clockSec);
     const activeStop = (state.activeStop && state.activeStop.machineId === mac.id && state.activeStop.startClock <= state.clockSec) ? state.activeStop : null;
 
+    const BREAK_START = 11 * 3600 + 30 * 60; // 11:30:00
+    const BREAK_END = 12 * 3600 + 15 * 60;   // 12:15:00
+
     let intervals = macEvents.map(e => ({
       start: Math.max(SHIFT_START, e.start),
       end: Math.min(state.clockSec, e.end || state.clockSec),
@@ -1189,13 +1192,35 @@ function renderGanttChart(){
       });
     }
 
-    intervals.sort((a,b) => a.start - b.start);
+    // Sanitize intervals: Planned Break (Istirahat 11:30 - 12:15) takes 100% priority.
+    // Unplanned breakdown stops cannot overlap or occur during Istirahat.
+    let sanitizedIntervals = [];
+    intervals.forEach(inv => {
+      if(inv.planned){
+        sanitizedIntervals.push(inv);
+      } else {
+        if(inv.start >= BREAK_START && inv.start < BREAK_END){
+          if(inv.end > BREAK_END){
+            sanitizedIntervals.push({ ...inv, start: BREAK_END });
+          }
+        } else if(inv.start < BREAK_START && inv.end > BREAK_START){
+          sanitizedIntervals.push({ ...inv, end: BREAK_START });
+          if(inv.end > BREAK_END){
+            sanitizedIntervals.push({ ...inv, start: BREAK_END });
+          }
+        } else {
+          sanitizedIntervals.push(inv);
+        }
+      }
+    });
+
+    sanitizedIntervals.sort((a,b) => a.start - b.start);
 
     let blocks = [];
     let curClock = SHIFT_START;
 
     // Up to state.clockSec: fill running gaps (Green) and downtime events (Red/Yellow)
-    intervals.forEach(inv => {
+    sanitizedIntervals.forEach(inv => {
       if(inv.start > curClock){
         blocks.push({ type: 'run', start: curClock, end: inv.start });
       }
@@ -1883,10 +1908,14 @@ setInterval(() => {
 
 setInterval(() => {
   const SHIFT_END = SHIFT_START + (8 * 3600);
-  if(isSimPaused || state.activeStop || state.clockSec >= SHIFT_END) return;
+  const isBreakTime = state.clockSec >= (11*3600 + 30*60) && state.clockSec < (12*3600 + 15*60);
+
+  // DO NOT trigger breakdown incidents during pause, active stop, shift end, OR LUNCH BREAK!
+  if(isSimPaused || state.activeStop || state.clockSec >= SHIFT_END || isBreakTime) return;
+
   const runningMachines = state.machines.filter(m=>m.status==='run');
   if(runningMachines.length===0) return;
-  
+
   // Incident trigger probability scales with sim speed
   const chance = 0.35 * (simSpeed > 60 ? 0.3 : (simSpeed > 10 ? 0.6 : 1));
   if(rand() < chance){
@@ -1921,6 +1950,16 @@ setInterval(() => {
   if(!state.events || !Array.isArray(state.events) || state.events.length === 0){
     state.events = JSON.parse(JSON.stringify(DEFAULT_PLANNED_BREAKS));
   }
+
+  // Clean up any unplanned breakdown events in state.events that overlap with Lunch Break (11:30 - 12:15)
+  const BREAK_START = 11 * 3600 + 30 * 60;
+  const BREAK_END = 12 * 3600 + 15 * 60;
+  state.events = state.events.filter(e => {
+    if(e.plannedFlag) return true;
+    if(e.start >= BREAK_START && e.start < BREAK_END) return false;
+    return true;
+  });
+
   if(!state.machines || !Array.isArray(state.machines) || state.machines.length === 0){
     state.machines = JSON.parse(JSON.stringify(DEFAULT_MACHINES));
   }
