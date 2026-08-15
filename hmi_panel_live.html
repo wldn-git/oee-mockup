@@ -579,20 +579,26 @@ function render(){
   const myActiveStop = getMyActiveStop(shared);
   const myEvents = getMyEvents(shared);
 
+  const SHIFT_END = SHIFT_START + (8 * 3600);
+  const isShiftEnded = shared.clockSec >= SHIFT_END;
+
   // reflect real machine identity in header (in case URL points to a different machine than default)
   document.querySelector('.hmi-id-badge').textContent = machineMeta.badge;
   document.querySelector('.hmi-id-text .name').textContent = mac.name.toUpperCase();
   document.querySelector('.hmi-id-text .line').textContent = mac.line.toUpperCase() + ' · WM TRAINING';
   document.getElementById('opVal').textContent = 'Budi S.';
 
-  document.getElementById('hmiClock').textContent = fmtClock(shared.clockSec);
+  document.getElementById('hmiClock').textContent = fmtClock(shared.clockSec) + (isShiftEnded ? ' (SELESAI)' : '');
 
   const box = document.getElementById('centerStateBox');
   const icon = document.getElementById('centerStateIcon');
   const label = document.getElementById('centerStateLabel');
   const sub = document.getElementById('centerStateSub');
   if(box && icon && label && sub){
-    if(mac.status==='run'){
+    if(isShiftEnded){
+      box.className='center-state-box state-down';
+      icon.textContent='🏁'; label.textContent='SHIFT SELESAI'; sub.textContent='Shift B Telah Berakhir (14:00:00)';
+    } else if(mac.status==='run'){
       box.className='center-state-box state-run';
       icon.textContent='▶'; label.textContent='RUNNING'; sub.textContent='Mesin Berjalan Normal';
     } else {
@@ -615,13 +621,20 @@ function render(){
 
   document.getElementById('goodVal').textContent = Math.round(mac.goodCount);
   document.getElementById('rejectVal').textContent = Math.round(mac.rejectCount);
-  const speedNow = mac.status==='run' ? Math.round(mac.idealCyclesPerMin * (0.9+rand()*0.08)) : 0;
-  document.getElementById('speedVal').innerHTML = speedNow+' <span style="font-size:10px;color:var(--text-low);">cpm</span>';
 
-  document.getElementById('tallyCount').textContent = myEvents.length;
-  document.getElementById('tallyNote').textContent = myEvents.length===0
-    ? 'Belum ada insiden tercatat'
-    : `Total ${Math.round(myEvents.reduce((a,e)=>a+(e.end-e.start),0)/60)} menit downtime`;
+  // Speed is strictly 0 cpm when shift is ended or machine is stopped!
+  const isRunning = mac.status === 'run' && !isShiftEnded;
+  const speedNow = isRunning ? Math.round(mac.idealCyclesPerMin * (0.9 + rand() * 0.08)) : 0;
+  document.getElementById('speedVal').innerHTML = speedNow + ' <span style="font-size:10px;color:var(--text-low);">cpm</span>';
+
+  // Exclude planned breaks (Istirahat) from Downtime Shift Ini count & total duration
+  const myUnplannedEvents = myEvents.filter(e => !e.plannedFlag && e.start <= shared.clockSec);
+  const totalUnplannedSec = myUnplannedEvents.reduce((a, e) => a + Math.max(0, (Math.min(shared.clockSec, e.end || shared.clockSec) - e.start)), 0);
+
+  document.getElementById('tallyCount').textContent = myUnplannedEvents.length;
+  document.getElementById('tallyNote').textContent = myUnplannedEvents.length === 0
+    ? 'Belum ada insiden breakdown'
+    : `Total ${Math.round(totalUnplannedSec / 60)} menit downtime`;
 
   document.getElementById('cycleVal').textContent = mac.idealCyclesPerMin;
   document.getElementById('uptimeVal').textContent = fmtClock(mac.runSec);

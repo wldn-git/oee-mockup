@@ -1350,7 +1350,8 @@ function render(){
   // Stop list (recent 6)
   const stopListEl = document.getElementById('stopList');
   if(stopListEl){
-    const recent = state.events.slice(0,6);
+    const activeEvents = state.events.filter(e => e.start <= state.clockSec);
+    const recent = activeEvents.slice(0,6);
     if(recent.length===0){
       stopListEl.innerHTML = `<div style="grid-column:1/-1;padding:16px;text-align:center;color:var(--text-low);font-size:12px;font-family:var(--mono);">Belum ada downtime tercatat shift ini</div>`;
     } else {
@@ -1359,7 +1360,7 @@ function render(){
           <div class="stop-dot" style="background:${e.plannedFlag?'#D9A441':'#D9524A'}"></div>
           <div class="stop-name">${e.categoryIcon} ${escapeHtml(e.reason)}<span style="color:var(--text-low);font-weight:400;"> — ${escapeHtml(e.machineName)}</span></div>
           <div class="stop-tag" style="color:${e.status==='pending'?'#D9A441':'#5FB78C'}">${e.status==='pending'?'Pending':'Approved'}</div>
-          <div class="stop-dur">${fmtDuration(e.end-e.start)}</div>
+          <div class="stop-dur">${fmtDuration(Math.max(0, Math.min(state.clockSec, e.end || state.clockSec) - e.start))}</div>
         </div>`).join('');
     }
   }
