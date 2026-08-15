@@ -193,9 +193,19 @@
     box-shadow:0 0 24px rgba(242,73,92,0.3);
     animation:blink 1s step-start infinite;
   }
+  .state-break{
+    border-color:var(--yellow);
+    box-shadow:0 0 30px rgba(242,201,76,0.15);
+  }
+  .state-break .center-state-icon{
+    background:rgba(242,201,76,0.2);color:var(--yellow);
+    border:2px solid var(--yellow);
+    box-shadow:0 0 24px rgba(242,201,76,0.3);
+  }
   .center-state-label{font-size:28px;font-weight:600;letter-spacing:0.04em;margin-bottom:4px;}
   .state-run .center-state-label{color:var(--good);}
   .state-down .center-state-label{color:var(--bad);}
+  .state-break .center-state-label{color:var(--yellow);}
   .center-state-sub{font-family:var(--mono);font-size:12px;color:var(--text-low);font-weight:500;}
 
   .idle-display .speed-live{
@@ -586,6 +596,7 @@ function render(){
 
   const SHIFT_END = SHIFT_START + (8 * 3600);
   const isShiftEnded = shared.clockSec >= SHIFT_END;
+  const isBreakTime = shared.clockSec >= (11*3600 + 30*60) && shared.clockSec < (12*3600 + 15*60);
 
   // reflect real machine identity in header (in case URL points to a different machine than default)
   document.querySelector('.hmi-id-badge').textContent = machineMeta.badge;
@@ -593,7 +604,7 @@ function render(){
   document.querySelector('.hmi-id-text .line').textContent = mac.line.toUpperCase() + ' · SMARTEK TRAINING';
   document.getElementById('opVal').textContent = 'Budi S.';
 
-  document.getElementById('hmiClock').textContent = fmtClock(shared.clockSec) + (isShiftEnded ? ' (SELESAI)' : '');
+  document.getElementById('hmiClock').textContent = fmtClock(shared.clockSec) + (isShiftEnded ? ' (SELESAI)' : (isBreakTime ? ' (ISTIRAHAT)' : ''));
 
   const box = document.getElementById('centerStateBox');
   const icon = document.getElementById('centerStateIcon');
@@ -603,6 +614,9 @@ function render(){
     if(isShiftEnded){
       box.className='center-state-box state-down';
       icon.textContent='🏁'; label.textContent='SHIFT SELESAI'; sub.textContent='Shift B Telah Berakhir (14:00:00)';
+    } else if(isBreakTime){
+      box.className='center-state-box state-break';
+      icon.textContent='🍱'; label.textContent='PLANNED BREAK'; sub.textContent='Istirahat Shift B (11:30 - 12:15)';
     } else if(mac.status==='run'){
       box.className='center-state-box state-run';
       icon.textContent='▶'; label.textContent='RUNNING'; sub.textContent='Mesin Berjalan Normal';
@@ -627,8 +641,8 @@ function render(){
   document.getElementById('goodVal').textContent = Math.round(mac.goodCount);
   document.getElementById('rejectVal').textContent = Math.round(mac.rejectCount);
 
-  // Speed is strictly 0 cpm when shift is ended or machine is stopped!
-  const isRunning = mac.status === 'run' && !isShiftEnded;
+  // Speed is strictly 0 cpm when shift is ended, during break time, or when machine is stopped!
+  const isRunning = mac.status === 'run' && !isShiftEnded && !isBreakTime;
   const speedNow = isRunning ? Math.round(mac.idealCyclesPerMin * (0.9 + rand() * 0.08)) : 0;
   document.getElementById('speedVal').innerHTML = speedNow + ' <span style="font-size:10px;color:var(--text-low);">cpm</span>';
 

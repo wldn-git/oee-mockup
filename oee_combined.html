@@ -271,6 +271,7 @@
   .m-status{font-family:var(--mono);font-size:9px;font-weight:600;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:0.04em;}
   .status-run{background:rgba(115,191,105,0.15);color:var(--good);border:1px solid rgba(115,191,105,0.3);}
   .status-down{background:rgba(242,73,92,0.15);color:var(--bad);border:1px solid rgba(242,73,92,0.3);}
+  .status-break{background:rgba(242,201,76,0.15);color:var(--yellow);border:1px solid rgba(242,201,76,0.3);}
   .m-oee{display:flex;align-items:baseline;gap:6px;margin-bottom:10px;}
   .m-oee-val{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text-hi);}
   .m-oee-label{font-family:var(--mono);font-size:9px;color:var(--text-low);font-weight:500;}
@@ -1400,15 +1401,17 @@ function render(){
     console.error("Trend chart update error:", e);
   }
 
+  const isBreakTime = state.clockSec >= (11*3600 + 30*60) && state.clockSec < (12*3600 + 15*60);
+
   // Machine cards
   const grid = document.getElementById('machinesGrid');
   if(grid){
     grid.innerHTML = state.machines.map(mac => {
       const mm = computeMachineMetrics(mac);
       const isDown = mac.status === 'down';
-      const stClass = isShiftEnded ? 'status-down' : (isDown ? 'status-down' : 'status-run');
-      const stBorderColor = isShiftEnded ? 'var(--steel-line)' : (isDown ? 'var(--bad)' : 'var(--good)');
-      const stLabel = isShiftEnded ? 'Shift Selesai' : (isDown ? 'Stopped' : 'Running');
+      const stClass = isShiftEnded ? 'status-down' : (isBreakTime ? 'status-break' : (isDown ? 'status-down' : 'status-run'));
+      const stBorderColor = isShiftEnded ? 'var(--steel-line)' : (isBreakTime ? 'var(--yellow)' : (isDown ? 'var(--bad)' : 'var(--good)'));
+      const stLabel = isShiftEnded ? 'Shift Selesai' : (isBreakTime ? 'Planned Break' : (isDown ? 'Stopped' : 'Running'));
       const oeeEst = (isDown && !isShiftEnded) ? '—' : mm.oee.toFixed(0) + '%';
       return `
         <div class="machine-card" style="border-left:4px solid ${stBorderColor};">
@@ -1421,7 +1424,7 @@ function render(){
             <div class="m-oee-label">OEE Mesin (A:${mm.availability.toFixed(0)}% P:${mm.performance.toFixed(0)}% Q:${mm.quality.toFixed(0)}%)</div>
           </div>
           <div class="m-metrics" style="cursor:pointer;" onclick="openMachineDrilldown('${mac.id}')">
-            ${isDown && !isShiftEnded ? `🔴 Sedang berhenti — insiden aktif` : `Good <b>${Math.round(mac.goodCount || 0)}</b> · Reject <b>${Math.round(mac.rejectCount || 0)}</b>`}
+            ${isBreakTime ? `🍱 Istirahat Shift B (11:30 - 12:15)` : (isDown && !isShiftEnded ? `🔴 Sedang berhenti — insiden aktif` : `Good <b>${Math.round(mac.goodCount || 0)}</b> · Reject <b>${Math.round(mac.rejectCount || 0)}</b>`)}
           </div>
           ${mm.totalDownMin > 0 ? `<div style="font-family:var(--mono);font-size:10px;color:var(--text-low);margin-top:8px;cursor:pointer;" onclick="openMachineDrilldown('${mac.id}')">Total downtime shift: ${mm.totalDownMin} min (${fmtHM(mm.plannedSec)} planned · ${fmtHM(mm.unplannedSec)} unplanned)</div>` : ''}
           <button onclick="event.stopPropagation();openHmiPanel('${mac.id}')" style="width:100%;margin-top:14px;padding:9px;background:var(--bg-2);border:1px solid var(--steel-line);border-radius:8px;color:var(--ember);font-family:var(--mono);font-size:11px;font-weight:800;cursor:pointer;">🖥️ Buka HMI Mesin →</button>
