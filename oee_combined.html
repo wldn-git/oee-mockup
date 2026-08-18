@@ -397,31 +397,43 @@
     <!-- STEP 1: IDENTITY REGISTRATION FORM -->
     <div id="otpStep1">
       <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#5794F2,#3871E0);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 16px rgba(87,148,242,0.35);">
-        📱
+        ✉️
       </div>
-      <div style="font-size:20px;font-weight:700;color:var(--text-hi);letter-spacing:-0.01em;">VERIFIKASI OTP &amp; JEJAK PENGAKSES</div>
-      <div style="font-family:var(--mono);font-size:11px;color:var(--text-low);margin-top:4px;margin-bottom:20px;">Isi identitas untuk menerima kode OTP &amp; mencatat jejak audit pengakses</div>
+      <div style="font-size:20px;font-weight:700;color:var(--text-hi);letter-spacing:-0.01em;">VERIFIKASI OTP EMAIL &amp; LEAD SALES</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text-low);margin-top:4px;margin-bottom:18px;">Isi data Anda untuk menerima Kode OTP ke Email &amp; membuka Demo OEE SMARTEK</div>
 
       <div style="margin-bottom:16px;text-align:left;">
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:600;">Nama Lengkap / Identity <span style="color:var(--bad);">*wajib</span></div>
-        <input type="text" id="otpUserName" placeholder="Contoh: Budi Santoso" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--sans);font-size:13px;padding:11px 14px;border-radius:8px;outline:none;margin-bottom:14px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">Nama Lengkap Customer <span style="color:var(--bad);">*wajib</span></div>
+        <input type="text" id="otpUserName" placeholder="Contoh: Budi Santoso" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--sans);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;margin-bottom:10px;">
 
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:600;">No. WA / NIK / ID Employee <span style="color:var(--bad);">*wajib</span></div>
-        <input type="text" id="otpUserPhone" placeholder="Contoh: 0812-3456-7890 / NIK-9021" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:13px;padding:11px 14px;border-radius:8px;outline:none;margin-bottom:14px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">Nama Perusahaan / PT <span style="color:var(--bad);">*wajib</span></div>
+        <input type="text" id="otpUserCompany" placeholder="Contoh: PT Mayora Indah Tbk" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--sans);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;margin-bottom:10px;">
 
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:600;">Peran / Jabatan Akses <span style="color:var(--bad);">*wajib</span></div>
-        <select id="otpUserRole" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--sans);font-size:13px;padding:11px 14px;border-radius:8px;outline:none;">
-          <option value="Operator Line 2">Operator Line 2 (Filling &amp; Packaging)</option>
-          <option value="Supervisor Produksi">Supervisor Produksi (SVP)</option>
-          <option value="Quality Control (QC)">Quality Control (QC Inspector)</option>
-          <option value="Plant Manager / Viewer">Plant Manager / Management Viewer</option>
-        </select>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">Email Customer (Untuk Terima OTP) <span style="color:var(--bad);">*wajib</span></div>
+        <input type="email" id="otpUserEmail" placeholder="Contoh: budi@company.com" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;margin-bottom:10px;">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">No. WhatsApp / HP</div>
+            <input type="text" id="otpUserPhone" placeholder="0812-3456-7890" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;">
+          </div>
+          <div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">Jabatan / Peran</div>
+            <select id="otpUserRole" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--sans);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;">
+              <option value="Plant Manager">Plant Manager</option>
+              <option value="Production Supervisor">Production Supervisor</option>
+              <option value="Automation / IT Eng">Automation / IT Engineer</option>
+              <option value="Purchasing / Procurement">Purchasing / Procurement</option>
+              <option value="Visitor / General">Visitor / General</option>
+            </select>
+          </div>
+        </div>
       </div>
 
-      <div id="otpStep1Err" style="font-family:var(--mono);font-size:10px;color:var(--bad);margin-bottom:12px;display:none;">⚠️ Harap isi Nama dan No. WA / NIK!</div>
+      <div id="otpStep1Err" style="font-family:var(--mono);font-size:10px;color:var(--bad);margin-bottom:12px;display:none;">⚠️ Harap isi Nama, Perusahaan, dan Email yang valid!</div>
 
-      <button onclick="generateAndSendOtp()" style="width:100%;padding:14px;background:linear-gradient(135deg,#5794F2,#3871E0);color:#FFFFFF;border:none;border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(87,148,242,0.3);transition:all 0.2s ease;">
-        📩 DAPATKAN KODE OTP &amp; LOG JEJAK
+      <button onclick="generateAndSendOtp()" id="btnSendOtpSubmit" style="width:100%;padding:14px;background:linear-gradient(135deg,#5794F2,#3871E0);color:#FFFFFF;border:none;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(87,148,242,0.3);transition:all 0.2s ease;">
+        📩 KIRIM OTP KE EMAIL &amp; GOOGLE SHEET SALES
       </button>
     </div>
 
@@ -2541,44 +2553,76 @@ const AUTH_STORAGE_KEY = 'smartek-oee-auth-token';
 let currentGeneratedOtp = null;
 let otpTimerInterval = null;
 
+const GOOGLE_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbx8kUGBZqq6RyFyWpPkz6zIOUC1UgSOL9XOVYRgQABaRFTS_4W27U2xobxIudj2cf4s/exec';
+
 function generateAndSendOtp(){
   const nameInput = document.getElementById('otpUserName');
+  const companyInput = document.getElementById('otpUserCompany');
+  const emailInput = document.getElementById('otpUserEmail');
   const phoneInput = document.getElementById('otpUserPhone');
   const roleSelect = document.getElementById('otpUserRole');
   const err = document.getElementById('otpStep1Err');
+  const btn = document.getElementById('btnSendOtpSubmit');
 
-  if(!nameInput || !phoneInput) return;
+  if(!nameInput || !emailInput || !companyInput) return;
 
   const name = nameInput.value.trim();
-  const phone = phoneInput.value.trim();
-  const role = roleSelect ? roleSelect.value : 'Operator Line 2';
+  const company = companyInput.value.trim();
+  const email = emailInput.value.trim();
+  const phone = phoneInput ? phoneInput.value.trim() : '-';
+  const role = roleSelect ? roleSelect.value : 'Plant Manager';
 
-  if(!name || !phone){
-    if(err){ err.style.display = 'block'; err.textContent = '⚠️ Harap isi Nama Lengkap dan No. WA / NIK!'; }
+  if(!name || !company || !email || !email.includes('@')){
+    if(err){ err.style.display = 'block'; err.textContent = '⚠️ Harap isi Nama, Perusahaan, dan Alamat Email yang valid!'; }
     return;
   }
   if(err) err.style.display = 'none';
 
+  if(btn){
+    btn.disabled = true;
+    btn.innerHTML = '⏳ MENGIRIM KODE OTP KE EMAIL &amp; GOOGLE SHEET...';
+  }
+
   currentGeneratedOtp = String(Math.floor(100000 + Math.random() * 900000));
 
-  window.pendingOtpData = {
-    name,
-    phone,
-    role,
-    otpCode: currentGeneratedOtp,
-    generatedAt: Date.now()
+  const payload = {
+    timestamp: new Date().toLocaleString('id-ID'),
+    name: name,
+    company: company,
+    email: email,
+    phone: phone,
+    role: role,
+    otpCode: currentGeneratedOtp
   };
 
-  document.getElementById('otpStep1').style.display = 'none';
-  document.getElementById('otpStep2').style.display = 'block';
+  window.pendingOtpData = payload;
 
-  const sub = document.getElementById('otpTargetSub');
-  if(sub) sub.textContent = `Terkirim untuk: ${escapeHtml(name)} (${escapeHtml(phone)})`;
+  try {
+    fetch(GOOGLE_WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(e => console.warn('Webhook POST error:', e));
+  } catch(e){}
 
-  const display = document.getElementById('otpGeneratedDisplay');
-  if(display) display.textContent = currentGeneratedOtp;
+  setTimeout(() => {
+    if(btn){
+      btn.disabled = false;
+      btn.innerHTML = '📩 KIRIM OTP KE EMAIL &amp; GOOGLE SHEET SALES';
+    }
 
-  startOtpCountdown(180);
+    document.getElementById('otpStep1').style.display = 'none';
+    document.getElementById('otpStep2').style.display = 'block';
+
+    const sub = document.getElementById('otpTargetSub');
+    if(sub) sub.textContent = `Kode OTP dikirim ke Email: ${escapeHtml(email)} (${escapeHtml(company)})`;
+
+    const display = document.getElementById('otpGeneratedDisplay');
+    if(display) display.textContent = currentGeneratedOtp;
+
+    startOtpCountdown(300);
+  }, 800);
 }
 
 function startOtpCountdown(sec){
@@ -2615,9 +2659,11 @@ function verifyOtpCode(){
 
   if((currentGeneratedOtp && val === currentGeneratedOtp) || val.toUpperCase() === 'SMARTEK2026' || val === '123456'){
     const data = window.pendingOtpData || {
-      name: 'User Terverifikasi',
+      name: 'Budi Santoso',
+      company: 'PT Mayora Indah Tbk',
+      email: 'budi@mayora.co.id',
       phone: '0812-3456-7890',
-      role: 'Operator Line 2',
+      role: 'Plant Manager',
       otpCode: val
     };
 
@@ -2625,10 +2671,12 @@ function verifyOtpCode(){
       id: 'audit-' + Date.now(),
       timestamp: fmtClock(state ? state.clockSec : SHIFT_START) + ' (' + new Date().toLocaleTimeString('id-ID') + ')',
       userName: data.name,
+      userCompany: data.company,
+      userEmail: data.email,
       userPhone: data.phone,
       userRole: data.role,
       otpCode: currentGeneratedOtp || val,
-      deviceInfo: navigator.userAgent.includes('Windows') ? 'Windows PC (Browser)' : 'Mobile / Tablet Device',
+      deviceInfo: navigator.userAgent.includes('Windows') ? 'Windows PC' : 'Mobile Device',
       status: 'VERIFIED & LOGGED'
     };
 
@@ -2649,7 +2697,7 @@ function verifyOtpCode(){
   } else {
     if(err){
       err.style.display = 'block';
-      err.textContent = '❌ Kode OTP salah atau kadaluarsa! Silakan periksa kembali.';
+      err.textContent = '❌ Kode OTP salah atau kadaluarsa! Silakan periksa kembali email Anda.';
     }
     input.style.borderColor = 'var(--bad)';
     input.focus();
@@ -2700,8 +2748,14 @@ function renderAuditTrailModal(){
   tbody.innerHTML = logs.map(l => `
     <tr style="border-bottom:1px solid var(--steel-line);">
       <td style="padding:10px 12px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-hi);">⏱️ ${escapeHtml(l.timestamp)}</td>
-      <td style="padding:10px 12px;font-weight:600;color:var(--text-hi);">${escapeHtml(l.userName)}</td>
-      <td style="padding:10px 12px;font-family:var(--mono);color:var(--text-mid);">${escapeHtml(l.userPhone)}</td>
+      <td style="padding:10px 12px;">
+        <div style="font-weight:700;color:var(--text-hi);">${escapeHtml(l.userName)}</div>
+        <div style="font-size:10px;color:var(--ember);font-weight:600;">🏢 ${escapeHtml(l.userCompany || '-')}</div>
+      </td>
+      <td style="padding:10px 12px;font-family:var(--mono);font-size:11px;color:var(--text-mid);">
+        <div>✉️ ${escapeHtml(l.userEmail || '-')}</div>
+        <div>📞 ${escapeHtml(l.userPhone || '-')}</div>
+      </td>
       <td style="padding:10px 12px;"><span style="background:rgba(87,148,242,0.15);color:var(--ember);border:1px solid rgba(87,148,242,0.3);padding:3px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:600;">${escapeHtml(l.userRole)}</span></td>
       <td style="padding:10px 12px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--good);">${escapeHtml(l.otpCode)}</td>
       <td style="padding:10px 12px;"><span style="background:rgba(16,185,129,0.15);color:var(--good);border:1px solid rgba(16,185,129,0.3);padding:3px 8px;border-radius:4px;font-family:var(--mono);font-size:9px;font-weight:700;">✓ ${escapeHtml(l.status)}</span></td>
