@@ -1879,9 +1879,9 @@ function seedDefaultRejectLogs(){
   const defaultLogs = [
     { id:'rej-101', clockSec: 6*3600 + 42*60 + 15, timestamp: '06:42:15', machineId:'filler-a', machineName:'Filler Unit A', reason:'Volume Underfill (<250ml)', count: 2, qcAction:'Auto-Ejected Bin #1', status:'Defect Auto-Logged' },
     { id:'rej-102', clockSec: 7*3600 + 15*60 + 22, timestamp: '07:15:22', machineId:'capper', machineName:'Capping Machine', reason:'Cap Misalignment / Miring', count: 1, qcAction:'Auto-Ejected Bin #2', status:'Defect Auto-Logged' },
-    { id:'rej-103', clockSec: 8*3600 + 05*60 + 40, timestamp: '08:05:40', machineId:'labeler', machineName:'Labeler Unit', reason:'Label Crease / Miring', count: 1, qcAction:'Auto-Ejected Bin #3', status:'Defect Auto-Logged' },
+    { id:'rej-103', clockSec: 8*3600 + 5*60 + 40, timestamp: '08:05:40', machineId:'labeler', machineName:'Labeler Unit', reason:'Label Crease / Miring', count: 1, qcAction:'Auto-Ejected Bin #3', status:'Defect Auto-Logged' },
     { id:'rej-104', clockSec: 9*3600 + 12*60 + 10, timestamp: '09:12:10', machineId:'filler-a', machineName:'Filler Unit A', reason:'Seal Ring Leakage Utama', count: 3, qcAction:'Auto-Ejected Bin #1', status:'Defect Auto-Logged' },
-    { id:'rej-105', clockSec: 10*3600 + 34*60 + 05, timestamp: '10:34:05', machineId:'cartoner', machineName:'Cartoner', reason:'Flap Karton Terbuka', count: 2, qcAction:'Quarantine Bin #4', status:'Defect Auto-Logged' },
+    { id:'rej-105', clockSec: 10*3600 + 34*60 + 5, timestamp: '10:34:05', machineId:'cartoner', machineName:'Cartoner', reason:'Flap Karton Terbuka', count: 2, qcAction:'Quarantine Bin #4', status:'Defect Auto-Logged' },
   ];
 
   state.rejectLogs = defaultLogs.filter(l => l.clockSec <= state.clockSec);
