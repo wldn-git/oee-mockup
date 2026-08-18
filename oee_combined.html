@@ -378,6 +378,31 @@
     .grid-2{grid-template-columns:1fr;}
     .machines{grid-template-columns:repeat(2,1fr);}
   }
+  /* COLLAPSIBLE SIDEBAR CONTROL DRAWER */
+  .sidebar-backdrop {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px);
+    z-index: 9990; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .sidebar-backdrop.open {
+    opacity: 1; pointer-events: auto;
+  }
+  .demo-sidebar {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 330px;
+    background: var(--bg-1); border-left: 1px solid var(--steel-line);
+    z-index: 9995; box-shadow: -10px 0 40px rgba(0,0,0,0.7);
+    transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex; flex-direction: column; overflow-y: auto;
+  }
+  .demo-sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-section-card {
+    background: var(--bg-2); border: 1px solid var(--steel-line);
+    border-radius: 12px; padding: 16px; margin-bottom: 14px;
+  }
+
   @media(max-width:600px){
     .category-grid{grid-template-columns:1fr;}
     .machines{grid-template-columns:1fr;}
@@ -385,6 +410,7 @@
     .topbar{padding:12px 16px;}
     .tabnav{padding:6px 16px;}
     .entry-stage{padding:16px;}
+    .demo-sidebar{width: 290px;}
   }
 </style>
 </head>
@@ -548,6 +574,71 @@
   </div>
 </div>
 
+<!-- ============ COLLAPSIBLE SIDEBAR DEMO CONTROLS ============ -->
+<div id="demoSidebarBackdrop" class="sidebar-backdrop" onclick="toggleDemoSidebar(false)"></div>
+<div id="demoControlSidebar" class="demo-sidebar">
+  <div style="padding:20px 24px;border-bottom:1px solid var(--steel-line);display:flex;align-items:center;justify-content:space-between;background:var(--bg-2);">
+    <div style="font-size:15px;font-weight:700;color:var(--text-hi);display:flex;align-items:center;gap:8px;">
+      <span>⚙️ DEMO CONTROLS</span>
+      <span style="font-family:var(--mono);font-size:9px;background:rgba(87,148,242,0.15);color:var(--ember);border:1px solid rgba(87,148,242,0.3);padding:2px 6px;border-radius:4px;">SMARTEK PANEL</span>
+    </div>
+    <button onclick="toggleDemoSidebar(false)" style="background:none;border:none;color:var(--text-low);font-size:20px;cursor:pointer;padding:4px;">✕</button>
+  </div>
+
+  <div style="padding:20px;flex:1;">
+
+    <!-- SECTION 1: TIMELAPSE -->
+    <div class="sidebar-section-card">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+        <span>⚡ Kecepatan Simulasi (Timelapse)</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:6px;margin-bottom:8px;">
+        <button onclick="setSimSpeed(1)" class="speed-btn active" id="spdBtn1" style="padding:8px 0;font-size:11px;font-weight:700;border:1px solid var(--steel-line);">1x</button>
+        <button onclick="setSimSpeed(10)" class="speed-btn" id="spdBtn10" style="padding:8px 0;font-size:11px;font-weight:700;border:1px solid var(--steel-line);">10x</button>
+        <button onclick="setSimSpeed(60)" class="speed-btn" id="spdBtn60" style="padding:8px 0;font-size:11px;font-weight:700;border:1px solid var(--steel-line);">60x</button>
+        <button onclick="setSimSpeed(300)" class="speed-btn" id="spdBtn300" style="padding:8px 0;font-size:11px;font-weight:700;border:1px solid var(--steel-line);">300x</button>
+      </div>
+      <button onclick="togglePauseSim()" class="speed-btn" id="spdBtnPause" style="width:100%;padding:10px;font-size:12px;font-weight:700;border:1px solid var(--steel-line);background:var(--bg-1);">⏸ Pause Simulasi</button>
+    </div>
+
+    <!-- SECTION 2: AUDIT LOG -->
+    <div class="sidebar-section-card">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">
+        📜 Audit Customer Lead
+      </div>
+      <button onclick="openAuditTrailModal()" class="btn-reset-demo" style="width:100%;justify-content:center;padding:10px;display:flex;align-items:center;gap:6px;border-color:rgba(51,181,229,0.4);color:var(--cyan);font-weight:600;" title="Lihat Jejak Audit Pengakses Dashboard">
+        📜 Jejak Pengakses (<span id="auditCountBadge">0</span>)
+      </button>
+    </div>
+
+    <!-- SECTION 3: THEME TOGGLE -->
+    <div class="sidebar-section-card">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">
+        🎨 Tema Tampilan Dashboard
+      </div>
+      <button onclick="toggleTheme()" id="btnThemeToggle" class="btn-reset-demo" style="width:100%;justify-content:center;padding:10px;display:flex;align-items:center;gap:6px;font-weight:600;">
+        🌙 SMARTEK Dark
+      </button>
+    </div>
+
+    <!-- SECTION 4: SYSTEM RESET & LOCK -->
+    <div class="sidebar-section-card" style="margin-bottom:0;">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">
+        🔧 System Utilities
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="resetDemo()" class="btn-reset-demo" style="width:100%;justify-content:center;padding:10px;font-weight:600;">↺ Reset Demo</button>
+        <button onclick="lockSession()" class="btn-reset-demo" style="width:100%;justify-content:center;padding:10px;display:flex;align-items:center;gap:6px;border-color:rgba(242,73,92,0.3);color:var(--bad);font-weight:600;" title="Kunci Sesi Akses Dashboard">🔒 Lock Sesi</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="padding:14px 20px;border-top:1px solid var(--steel-line);background:var(--bg-2);text-align:center;font-family:var(--mono);font-size:10px;color:var(--text-low);">
+    SMARTEK OEE MONITOR · CONTROL PANEL
+  </div>
+</div>
+
 <div class="topbar">
   <div class="brand">
     <div class="brand-mark">S</div>
@@ -557,20 +648,11 @@
     </div>
   </div>
   <div class="topbar-right">
-    <div class="sim-speed-control" style="display:flex;align-items:center;gap:3px;background:var(--bg-2);padding:3px;border-radius:6px;border:1px solid var(--steel-line);" title="Kontrol Kecepatan Simulasi Shift">
-      <span style="font-family:var(--mono);font-size:9px;color:var(--text-low);padding:0 4px;font-weight:600;">⚡ TIMELAPSE:</span>
-      <button onclick="setSimSpeed(1)" class="speed-btn active" id="spdBtn1">1x</button>
-      <button onclick="setSimSpeed(10)" class="speed-btn" id="spdBtn10">10x</button>
-      <button onclick="setSimSpeed(60)" class="speed-btn" id="spdBtn60">60x</button>
-      <button onclick="setSimSpeed(300)" class="speed-btn" id="spdBtn300">300x</button>
-      <button onclick="togglePauseSim()" class="speed-btn" id="spdBtnPause">⏸</button>
-    </div>
-    <button onclick="openAuditTrailModal()" class="btn-reset-demo" style="display:flex;align-items:center;gap:4px;border-color:rgba(51,181,229,0.4);color:var(--cyan);" title="Lihat Jejak Audit Pengakses Dashboard">📜 Jejak Pengakses (<span id="auditCountBadge">0</span>)</button>
-    <button onclick="toggleTheme()" id="btnThemeToggle" class="btn-reset-demo" style="display:flex;align-items:center;gap:6px;">🌙 SMARTEK Dark</button>
-    <button onclick="resetDemo()" class="btn-reset-demo">↺ Reset Demo</button>
-    <button onclick="lockSession()" class="btn-reset-demo" style="display:flex;align-items:center;gap:4px;border-color:rgba(242,73,92,0.3);color:var(--bad);" title="Kunci Sesi Akses Dashboard">🔒 Lock</button>
     <div class="line-select"><strong>Line 2</strong> — Filling &amp; Packaging</div>
     <div class="shift-clock"><span class="live-dot"></span> SHIFT B · <span class="time" id="clockTime">06:00:00</span></div>
+    <button onclick="toggleDemoSidebar(true)" class="btn-reset-demo" style="display:flex;align-items:center;gap:6px;background:var(--bg-2);border-color:var(--ember);color:var(--text-hi);font-weight:700;padding:6px 14px;box-shadow:0 2px 10px rgba(87,148,242,0.25);" title="Buka Panel Pengaturan Demo">
+      <span>⚙️</span> CONTROLS
+    </button>
   </div>
 </div>
 
@@ -2852,6 +2934,20 @@ function resetDemo(){
 
 let simSpeed = 1;
 let isSimPaused = false;
+
+function toggleDemoSidebar(show){
+  const sidebar = document.getElementById('demoControlSidebar');
+  const backdrop = document.getElementById('demoSidebarBackdrop');
+  if(!sidebar) return;
+  const isOpening = (show !== undefined) ? show : !sidebar.classList.contains('open');
+  if(isOpening){
+    sidebar.classList.add('open');
+    if(backdrop) backdrop.classList.add('open');
+  } else {
+    sidebar.classList.remove('open');
+    if(backdrop) backdrop.classList.remove('open');
+  }
+}
 
 function setSimSpeed(speed){
   simSpeed = speed;
