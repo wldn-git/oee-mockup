@@ -399,41 +399,27 @@
       <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#5794F2,#3871E0);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 16px rgba(87,148,242,0.35);">
         ✉️
       </div>
-      <div style="font-size:20px;font-weight:700;color:var(--text-hi);letter-spacing:-0.01em;">VERIFIKASI OTP EMAIL &amp; LEAD SALES</div>
+      <div style="font-size:20px;font-weight:700;color:var(--text-hi);letter-spacing:-0.01em;">VERIFIKASI PENGGUNA</div>
       <div style="font-family:var(--mono);font-size:11px;color:var(--text-low);margin-top:4px;margin-bottom:18px;">Isi data Anda untuk menerima Kode OTP ke Email &amp; membuka Demo OEE SMARTEK</div>
 
       <div style="margin-bottom:16px;text-align:left;">
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">Nama Lengkap Customer <span style="color:var(--bad);">*wajib</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">Nama Lengkap <span style="color:var(--bad);">*wajib</span></div>
         <input type="text" id="otpUserName" placeholder="Contoh: Budi Santoso" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--sans);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;margin-bottom:10px;">
 
         <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">Nama Perusahaan / PT <span style="color:var(--bad);">*wajib</span></div>
         <input type="text" id="otpUserCompany" placeholder="Contoh: PT Mayora Indah Tbk" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--sans);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;margin-bottom:10px;">
 
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">Email Customer (Untuk Terima OTP) <span style="color:var(--bad);">*wajib</span></div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">Email (Untuk Terima OTP) <span style="color:var(--bad);">*wajib</span></div>
         <input type="email" id="otpUserEmail" placeholder="Contoh: budi@company.com" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;margin-bottom:10px;">
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div>
-            <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">No. WhatsApp / HP</div>
-            <input type="text" id="otpUserPhone" placeholder="0812-3456-7890" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;">
-          </div>
-          <div>
-            <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">Jabatan / Peran</div>
-            <select id="otpUserRole" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--sans);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;">
-              <option value="Plant Manager">Plant Manager</option>
-              <option value="Production Supervisor">Production Supervisor</option>
-              <option value="Automation / IT Eng">Automation / IT Engineer</option>
-              <option value="Purchasing / Procurement">Purchasing / Procurement</option>
-              <option value="Visitor / General">Visitor / General</option>
-            </select>
-          </div>
-        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;font-weight:600;">No. WhatsApp / HP <span style="color:var(--text-low);font-weight:400;">(Opsional)</span></div>
+        <input type="text" id="otpUserPhone" placeholder="Contoh: 0812-3456-7890" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;">
       </div>
 
       <div id="otpStep1Err" style="font-family:var(--mono);font-size:10px;color:var(--bad);margin-bottom:12px;display:none;">⚠️ Harap isi Nama, Perusahaan, dan Email yang valid!</div>
 
       <button onclick="generateAndSendOtp()" id="btnSendOtpSubmit" style="width:100%;padding:14px;background:linear-gradient(135deg,#5794F2,#3871E0);color:#FFFFFF;border:none;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(87,148,242,0.3);transition:all 0.2s ease;">
-        📩 KIRIM OTP KE EMAIL &amp; GOOGLE SHEET SALES
+        📩 KIRIM KODE OTP KE EMAIL
       </button>
     </div>
 
@@ -2582,7 +2568,7 @@ function generateAndSendOtp(){
 
   if(btn){
     btn.disabled = true;
-    btn.innerHTML = '⏳ MENGIRIM KODE OTP KE EMAIL &amp; GOOGLE SHEET...';
+    btn.innerHTML = '⏳ MENGIRIM KODE OTP KE EMAIL...';
   }
 
   currentGeneratedOtp = String(Math.floor(100000 + Math.random() * 900000));
@@ -2593,7 +2579,7 @@ function generateAndSendOtp(){
     company: company,
     email: email,
     phone: phone,
-    role: role,
+    role: 'Guest / Customer',
     otpCode: currentGeneratedOtp
   };
 
@@ -2611,7 +2597,7 @@ function generateAndSendOtp(){
   setTimeout(() => {
     if(btn){
       btn.disabled = false;
-      btn.innerHTML = '📩 KIRIM OTP KE EMAIL &amp; GOOGLE SHEET SALES';
+      btn.innerHTML = '📩 KIRIM KODE OTP KE EMAIL';
     }
 
     document.getElementById('otpStep1').style.display = 'none';
