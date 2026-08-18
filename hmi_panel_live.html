@@ -340,31 +340,6 @@
 </head>
 <body>
 
-<!-- ============ TOKEN AUTHENTICATION LOCK SCREEN ============ -->
-<div id="authLockOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(17,18,23,0.96);backdrop-filter:blur(24px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;">
-  <div style="width:100%;max-width:440px;background:var(--bg-1);border:1px solid var(--steel-line);border-radius:16px;padding:32px 28px;box-shadow:0 12px 40px rgba(0,0,0,0.6);text-align:center;">
-    <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#5794F2,#3871E0);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 16px rgba(87,148,242,0.35);">
-      🔐
-    </div>
-    <div style="font-size:20px;font-weight:700;color:var(--text-hi);letter-spacing:-0.01em;">SMARTEK — HMI ACCESS</div>
-    <div style="font-family:var(--mono);font-size:11px;color:var(--text-low);margin-top:4px;margin-bottom:24px;">Masukkan Access Token / PIN untuk mengakses HMI Machine Panel</div>
-
-    <div style="margin-bottom:20px;text-align:left;">
-      <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-weight:600;">Access Token <span style="color:var(--bad);">*wajib</span></div>
-      <div style="position:relative;">
-        <input type="password" id="authTokenInput" onkeypress="if(event.key==='Enter') verifyAuthToken()" placeholder="Masukkan Token (cth: SMARTEK2026)" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:13px;padding:12px 40px 12px 14px;border-radius:8px;outline:none;transition:all 0.2s ease;">
-        <button onclick="toggleTokenVisibility()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-low);cursor:pointer;font-size:14px;" id="tokenVisBtn">👁️</button>
-      </div>
-      <div id="authErrMsg" style="font-family:var(--mono);font-size:10px;color:var(--bad);margin-top:6px;display:none;">⚠️ Access Token salah! Silakan coba lagi.</div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text-low);margin-top:8px;">💡 Default Token Training: <code style="color:var(--ember);background:var(--bg-2);padding:2px 6px;border-radius:4px;">SMARTEK2026</code></div>
-    </div>
-
-    <button onclick="verifyAuthToken()" style="width:100%;padding:14px;background:linear-gradient(135deg,#5794F2,#3871E0);color:#FFFFFF;border:none;border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(87,148,242,0.3);transition:all 0.2s ease;">
-      🔓 MASUK HMI PANEL
-    </button>
-  </div>
-</div>
-
 <div class="hmi">
 
   <div class="hmi-header">
@@ -932,61 +907,6 @@ function resetShift(){
   writeSharedState(standaloneFallback);
   render();
 }
-
-/* ============================================================
-   TOKEN AUTHENTICATION GATE
-============================================================ */
-const VALID_TOKENS = ['SMARTEK2026', 'SMARTEK-OEE', '123456', 'SMARTEK'];
-const AUTH_STORAGE_KEY = 'smartek-oee-auth-token';
-
-function verifyAuthToken(){
-  const input = document.getElementById('authTokenInput');
-  const err = document.getElementById('authErrMsg');
-  const overlay = document.getElementById('authLockOverlay');
-  if(!input) return;
-
-  const val = input.value.trim();
-  if(VALID_TOKENS.includes(val) || val.toUpperCase() === 'SMARTEK2026'){
-    try{ localStorage.setItem(AUTH_STORAGE_KEY, val); }catch(e){}
-    if(overlay) overlay.style.display = 'none';
-    if(err) err.style.display = 'none';
-  } else {
-    if(err){
-      err.style.display = 'block';
-      err.textContent = '❌ Access Token salah! Silakan masukkan token yang benar.';
-    }
-    if(input){
-      input.style.borderColor = 'var(--bad)';
-      input.focus();
-    }
-  }
-}
-
-function toggleTokenVisibility(){
-  const input = document.getElementById('authTokenInput');
-  const btn = document.getElementById('tokenVisBtn');
-  if(!input) return;
-  if(input.type === 'password'){
-    input.type = 'text';
-    if(btn) btn.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    if(btn) btn.textContent = '👁️';
-  }
-}
-
-(function checkAuthToken(){
-  let saved = null;
-  try{ saved = localStorage.getItem(AUTH_STORAGE_KEY); }catch(e){}
-  window.addEventListener('DOMContentLoaded', () => {
-    const overlay = document.getElementById('authLockOverlay');
-    if(saved && (VALID_TOKENS.includes(saved) || saved.toUpperCase() === 'SMARTEK2026')){
-      if(overlay) overlay.style.display = 'none';
-    } else {
-      if(overlay) overlay.style.display = 'flex';
-    }
-  });
-})();
 
 // Poll shared state every second
 setInterval(render, 1000);
