@@ -821,9 +821,9 @@
         </div>
       </div>
 
-      <div style="overflow-x:auto;">
+      <div style="overflow-x:auto;max-height:420px;overflow-y:auto;border:1px solid var(--steel-line);border-radius:8px;">
         <table style="width:100%;border-collapse:collapse;font-family:var(--sans);font-size:12px;text-align:left;">
-          <thead>
+          <thead style="position:sticky;top:0;z-index:5;background:var(--bg-2);">
             <tr style="background:var(--bg-2);border-bottom:1px solid var(--steel-line);font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.04em;">
               <th style="padding:10px 14px;width:140px;">WAKTU (TIMESTAMP)</th>
               <th style="padding:10px 14px;">MESIN / STASIUN</th>
@@ -837,6 +837,10 @@
             <!-- Dynamically populated via renderRejectLogTable() -->
           </tbody>
         </table>
+      </div>
+
+      <div id="rejectPaginationFooter">
+        <!-- Dynamically rendered pagination controls -->
       </div>
     </div>
 
@@ -1930,12 +1934,32 @@ function renderQualityView(){
   renderParetoChart();
 }
 
+const REJECT_ITEMS_PER_PAGE = 10;
+let currentRejectFilterStateKey = "";
+
+function setRejectPage(p){
+  state.rejectLogPage = p;
+  renderRejectLogTable();
+}
+
+function changeRejectPage(delta){
+  state.rejectLogPage = (state.rejectLogPage || 1) + delta;
+  renderRejectLogTable();
+}
+
 function renderRejectLogTable(){
   const tbody = document.getElementById('rejectLogTbody');
+  const footer = document.getElementById('rejectPaginationFooter');
   if(!tbody) return;
 
   const search = (document.getElementById('rejectSearchInput')?.value || '').toLowerCase();
   const filterMac = document.getElementById('rejectMachineFilter')?.value || 'all';
+
+  const filterKey = `${search}_${filterMac}`;
+  if(currentRejectFilterStateKey !== filterKey){
+    currentRejectFilterStateKey = filterKey;
+    state.rejectLogPage = 1;
+  }
 
   let logs = state.rejectLogs || [];
   if(filterMac !== 'all'){
@@ -1950,12 +1974,24 @@ function renderRejectLogTable(){
     );
   }
 
-  if(logs.length === 0){
+  const totalLogs = logs.length;
+  if(totalLogs === 0){
     tbody.innerHTML = `<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--text-low);font-family:var(--mono);">Tidak ada catatan reject terdeteksi yang sesuai filter</td></tr>`;
+    if(footer) footer.innerHTML = '';
     return;
   }
 
-  tbody.innerHTML = logs.map(l => `
+  const totalPages = Math.max(1, Math.ceil(totalLogs / REJECT_ITEMS_PER_PAGE));
+  if(!state.rejectLogPage || state.rejectLogPage < 1) state.rejectLogPage = 1;
+  if(state.rejectLogPage > totalPages) state.rejectLogPage = totalPages;
+
+  const curPage = state.rejectLogPage;
+  const startIdx = (curPage - 1) * REJECT_ITEMS_PER_PAGE;
+  const endIdx = Math.min(totalLogs, curPage * REJECT_ITEMS_PER_PAGE);
+
+  const pagedLogs = logs.slice(startIdx, endIdx);
+
+  tbody.innerHTML = pagedLogs.map(l => `
     <tr style="border-bottom:1px solid var(--steel-line);transition:background 0.15s ease;" onmouseenter="this.style.background='var(--bg-3)'" onmouseleave="this.style.background='transparent'">
       <td style="padding:12px 14px;">
         <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-hi);background:var(--bg-2);padding:4px 8px;border-radius:4px;border:1px solid var(--steel-line);display:inline-flex;align-items:center;gap:4px;">
@@ -1983,6 +2019,28 @@ function renderRejectLogTable(){
       </td>
     </tr>
   `).join('');
+
+  if(footer){
+    let pageButtonsHtml = '';
+    for(let p=1; p<=totalPages; p++){
+      if(p === curPage){
+        pageButtonsHtml += `<button class="svp-filter-btn active" style="min-width:28px;">${p}</button>`;
+      } else {
+        pageButtonsHtml += `<button class="svp-filter-btn" onclick="setRejectPage(${p})" style="min-width:28px;">${p}</button>`;
+      }
+    }
+
+    footer.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:10px;border-top:1px solid var(--steel-line);font-family:var(--mono);font-size:11px;color:var(--text-mid);flex-wrap:wrap;gap:10px;width:100%;">
+        <div>Menampilkan <b>${startIdx + 1}–${endIdx}</b> dari <b>${totalLogs}</b> log reject (Halaman <b>${curPage}</b> dari <b>${totalPages}</b>)</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="svp-filter-btn" onclick="changeRejectPage(-1)" ${curPage === 1 ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>« Prev</button>
+          ${pageButtonsHtml}
+          <button class="svp-filter-btn" onclick="changeRejectPage(1)" ${curPage >= totalPages ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>Next »</button>
+        </div>
+      </div>
+    `;
+  }
 }
 
 function renderRejectSpikeChart(){
