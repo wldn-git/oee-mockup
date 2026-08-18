@@ -2649,6 +2649,8 @@ function startOtpCountdown(sec){
   }, 1000);
 }
 
+const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+
 function verifyOtpCode(){
   const input = document.getElementById('otpCodeInput');
   const err = document.getElementById('otpStep2Err');
@@ -2656,28 +2658,33 @@ function verifyOtpCode(){
   if(!input) return;
 
   const val = input.value.trim();
+  const now = Date.now();
 
-  if((currentGeneratedOtp && val === currentGeneratedOtp) || val.toUpperCase() === 'SMARTEK2026' || val === '123456'){
+  // Enforce strictly active generated OTP code
+  if(currentGeneratedOtp && val === currentGeneratedOtp){
     const data = window.pendingOtpData || {
-      name: 'Budi Santoso',
-      company: 'PT Mayora Indah Tbk',
-      email: 'budi@mayora.co.id',
+      name: 'User Terverifikasi',
+      company: 'PT Customer',
+      email: 'customer@company.com',
       phone: '0812-3456-7890',
       role: 'Plant Manager',
       otpCode: val
     };
 
+    data.authenticatedAt = now;
+    data.expiresAt = now + THREE_DAYS_MS;
+
     const auditEntry = {
-      id: 'audit-' + Date.now(),
+      id: 'audit-' + now,
       timestamp: fmtClock(state ? state.clockSec : SHIFT_START) + ' (' + new Date().toLocaleTimeString('id-ID') + ')',
       userName: data.name,
       userCompany: data.company,
       userEmail: data.email,
       userPhone: data.phone,
       userRole: data.role,
-      otpCode: currentGeneratedOtp || val,
+      otpCode: val,
       deviceInfo: navigator.userAgent.includes('Windows') ? 'Windows PC' : 'Mobile Device',
-      status: 'VERIFIED & LOGGED'
+      status: 'VERIFIED (Sesi 3 Hari)'
     };
 
     let logs = [];
@@ -2786,19 +2793,27 @@ function updateAuditBadgeCount(){
   try{ logs = JSON.parse(localStorage.getItem('smartek-audit-trail-logs')) || []; }catch(e){}
   if(logs.length === 0){
     logs = [
-      { id:'audit-101', timestamp: '06:00:15 (Shift B Start)', userName: 'Budi Santoso', userPhone: '0812-9876-5432', userRole: 'Supervisor Produksi', otpCode: '849201', deviceInfo: 'Windows PC (Chrome)', status: 'VERIFIED & LOGGED' },
-      { id:'audit-102', timestamp: '08:15:30 (Mid Shift)', userName: 'Rina Wijaya', userPhone: '0857-1234-5678', userRole: 'Quality Control (QC)', otpCode: '592014', deviceInfo: 'Tablet QC (Android)', status: 'VERIFIED & LOGGED' }
+      { id:'audit-101', timestamp: '06:00:15 (Shift B Start)', userName: 'Budi Santoso', userCompany: 'PT Mayora Indah Tbk', userEmail: 'budi@mayora.co.id', userPhone: '0812-9876-5432', userRole: 'Plant Manager', otpCode: '849201', deviceInfo: 'Windows PC', status: 'VERIFIED (Sesi 3 Hari)' },
+      { id:'audit-102', timestamp: '08:15:30 (Mid Shift)', userName: 'Rina Wijaya', userCompany: 'PT Unilever Indonesia', userEmail: 'rina@unilever.com', userPhone: '0857-1234-5678', userRole: 'Production Supervisor', otpCode: '592014', deviceInfo: 'Tablet (Android)', status: 'VERIFIED (Sesi 3 Hari)' }
     ];
     try{ localStorage.setItem('smartek-audit-trail-logs', JSON.stringify(logs)); }catch(e){}
   }
   let savedAuth = null;
-  try{ savedAuth = localStorage.getItem(AUTH_STORAGE_KEY); }catch(e){}
+  try{ 
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY); 
+    if(raw) savedAuth = JSON.parse(raw);
+  }catch(e){}
+
   window.addEventListener('DOMContentLoaded', () => {
     updateAuditBadgeCount();
     const overlay = document.getElementById('authLockOverlay');
-    if(savedAuth){
+    
+    // Validate 3-Day Session Expiry (expiresAt > Date.now())
+    if(savedAuth && savedAuth.expiresAt && Date.now() < savedAuth.expiresAt){
       if(overlay) overlay.style.display = 'none';
     } else {
+      // Session expired (> 3 days) or not logged in
+      try{ localStorage.removeItem(AUTH_STORAGE_KEY); }catch(e){}
       if(overlay) overlay.style.display = 'flex';
     }
   });
