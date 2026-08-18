@@ -416,6 +416,27 @@
           <div class="speed-stat"><div class="speed-stat-val" id="uptimeVal">00:00:00</div><div class="speed-stat-label">Uptime Shift</div></div>
           <div class="speed-stat"><div class="speed-stat-val" id="opVal">Budi S.</div><div class="speed-stat-label">Operator</div></div>
         </div>
+
+        <!-- MANUAL REJECT / DEFECT EJECTION CONTROL PANEL -->
+        <div style="margin-top:20px;padding:16px;background:var(--bg-2);border:1px solid var(--steel-line);border-radius:12px;width:100%;max-width:540px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-hi);display:flex;align-items:center;gap:6px;">
+              <span>⚠️ KONTROL REJECT MANUAL / QC EJECTION</span>
+            </div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--warn);background:rgba(255,120,10,0.12);padding:3px 8px;border-radius:4px;border:1px solid rgba(255,120,10,0.3);font-weight:700;">
+              AUTO SYNC OEE
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;">
+            <select id="hmiRejectReasonSelect" style="flex:1;background:var(--bg-1);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--sans);font-size:12px;padding:10px 12px;border-radius:8px;outline:none;">
+              <!-- Options populated dynamically -->
+            </select>
+            <button onclick="triggerHmiManualReject(event)" style="padding:10px 18px;background:linear-gradient(135deg,#F2495C,#DC2626);color:#FFF;border:none;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(242,73,92,0.35);white-space:nowrap;display:flex;align-items:center;gap:6px;transition:all 0.2s ease;">
+              <span>💥</span> EJEKSI REJECT (+1)
+            </button>
+          </div>
+        </div>
       </div>
       <!-- popup injected here -->
     </div>
@@ -697,6 +718,17 @@ function renderActionZone(s, mac, myActiveStop){
       existingPopup.remove();
       lastPopupStateKey = null;
     }
+    const sel = document.getElementById('hmiRejectReasonSelect');
+    if(sel && sel.options.length === 0){
+      const defectsOptions = {
+        'filler-a': ['Volume Underfill (<250ml)', 'Seal Ring Leakage Utama', 'Cairan Meluap / Foam Overflow', 'Dosis Bahan Baku Tidak Pas'],
+        'capper': ['Cap Misalignment / Miring', 'Torsi Cap Kurang / Loose Cap', 'Cap Retak / Rusak'],
+        'labeler': ['Label Miring / Crease', 'Barcode Unreadable', 'Perekat Label Lemah'],
+        'cartoner': ['Flap Karton Terbuka', 'Karton Penyok / Damaged', 'Jumlah Botol Dus Kurang']
+      };
+      const list = defectsOptions[MACHINE_ID] || ['Pemeriksaan QC Manual Reject'];
+      sel.innerHTML = list.map(opt => `<option value="${escapeAttr(opt)}">⚠️ ${escapeHtml(opt)}</option>`).join('');
+    }
   }
 }
 
@@ -829,37 +861,46 @@ function triggerEStop(){
   writeSharedState(s);
   render();
 }
-function simulateRejectFromHmi(){
+function triggerHmiManualReject(evt){
   const s = readSharedState();
   const mac = getMyMachine(s);
   if(!mac) return;
 
-  mac.rejectCount = Math.round((mac.rejectCount || 0) + 1);
+  const sel = document.getElementById('hmiRejectReasonSelect');
+  const reason = sel ? sel.value : 'Pemeriksaan QC Manual Reject';
 
-  const defectsMap = {
-    'filler-a': 'Volume Underfill (<250ml)',
-    'capper': 'Cap Misalignment / Miring',
-    'labeler': 'Label Crease / Miring',
-    'cartoner': 'Flap Karton Terbuka'
-  };
-  const reason = defectsMap[MACHINE_ID] || 'Pemeriksaan QC Manual Reject';
+  mac.rejectCount = Math.round((mac.rejectCount || 0) + 1);
   const binNo = MACHINE_ID==='filler-a' ? '1' : (MACHINE_ID==='capper' ? '2' : (MACHINE_ID==='labeler' ? '3' : '4'));
 
   if(!s.rejectLogs) s.rejectLogs = [];
   s.rejectLogs.unshift({
-    id: 'rej-hmi-' + Date.now(),
+    id: 'rej-hmi-' + Date.now() + '-' + Math.floor(rand()*1000),
     clockSec: s.clockSec,
     timestamp: fmtClock(s.clockSec),
     machineId: MACHINE_ID,
     machineName: mac.name,
     reason: reason,
     count: 1,
-    qcAction: 'Manual Eject from HMI Bin #' + binNo,
-    status: 'HMI Operator Logged'
+    qcAction: 'Manual Eject HMI Bin #' + binNo,
+    status: 'HMI Defect Ejected'
   });
 
   writeSharedState(s);
   render();
+
+  if(evt && evt.currentTarget){
+    const btn = evt.currentTarget;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓ TERKIRIM!';
+    btn.style.background = '#10B981';
+    setTimeout(()=>{
+      btn.innerHTML = orig;
+      btn.style.background = 'linear-gradient(135deg,#F2495C,#DC2626)';
+    }, 1200);
+  }
+}
+function simulateRejectFromHmi(){
+  triggerHmiManualReject();
 }
 
 function resetShift(){
