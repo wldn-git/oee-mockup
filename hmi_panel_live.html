@@ -417,8 +417,30 @@
           <div class="speed-stat"><div class="speed-stat-val" id="opVal">Budi S.</div><div class="speed-stat-label">Operator</div></div>
         </div>
 
+        <!-- MANUAL SPEED CPM OVERRIDE CONTROL PANEL -->
+        <div style="margin-top:16px;padding:14px 16px;background:var(--bg-2);border:1px solid var(--steel-line);border-radius:12px;width:100%;max-width:540px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-hi);display:flex;align-items:center;gap:6px;">
+              <span>⚡ KONTROL KECEPATAN CPM (OVERRIDE MANUAL)</span>
+            </div>
+            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ember);" id="cpmOverrideDisplayVal">
+              40 CPM
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button onclick="adjustCpmOverride(-5)" style="padding:7px 12px;background:var(--bg-1);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;">-5</button>
+            <button onclick="adjustCpmOverride(-1)" style="padding:7px 10px;background:var(--bg-1);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;">-1</button>
+            
+            <input type="range" id="cpmRangeSlider" min="0" max="120" value="40" oninput="onCpmSliderChange(this.value)" style="flex:1;accent-color:var(--ember);cursor:pointer;height:6px;">
+            
+            <button onclick="adjustCpmOverride(+1)" style="padding:7px 10px;background:var(--bg-1);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;">+1</button>
+            <button onclick="adjustCpmOverride(+5)" style="padding:7px 12px;background:var(--bg-1);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;">+5</button>
+          </div>
+        </div>
+
         <!-- MANUAL REJECT / DEFECT EJECTION CONTROL PANEL -->
-        <div style="margin-top:20px;padding:16px;background:var(--bg-2);border:1px solid var(--steel-line);border-radius:12px;width:100%;max-width:540px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+        <div style="margin-top:14px;padding:16px;background:var(--bg-2);border:1px solid var(--steel-line);border-radius:12px;width:100%;max-width:540px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-hi);display:flex;align-items:center;gap:6px;">
               <span>⚠️ KONTROL REJECT MANUAL / QC EJECTION</span>
@@ -446,12 +468,8 @@
   <div class="hmi-footer">
     <div class="hw-btns">
       <button class="hw-btn" onclick="simulateManualStop()">⏸ SIMULASI STOP</button>
-      <button class="hw-btn" onclick="resetShift()">↺ RESET SHIFT</button>
     </div>
     <div class="footer-note">SMARTEK — TRAINING · HMI PANEL MOCKUP · FILLER UNIT A · IEC 61131 STYLE REFERENCE</div>
-    <div class="hw-btns">
-      <button class="hw-btn estop" onclick="triggerEStop()">⏻ E-STOP</button>
-    </div>
   </div>
 
 </div>
@@ -677,6 +695,11 @@ function render(){
     : `Total ${Math.round(totalUnplannedSec / 60)} menit downtime`;
 
   document.getElementById('cycleVal').textContent = mac.idealCyclesPerMin;
+  const cpmSlider = document.getElementById('cpmRangeSlider');
+  if(cpmSlider && document.activeElement !== cpmSlider) cpmSlider.value = mac.idealCyclesPerMin;
+  const cpmLabel = document.getElementById('cpmOverrideDisplayVal');
+  if(cpmLabel) cpmLabel.textContent = mac.idealCyclesPerMin + ' CPM';
+
   document.getElementById('uptimeVal').textContent = fmtClock(mac.runSec);
 
   renderActionZone(shared, mac, myActiveStop);
@@ -851,12 +874,31 @@ function simulateManualStop(){
   uiState.form = { category:'mesin', reason:REASON_PRESETS.mesin[0], other:'', isOther:false };
   render();
 }
-function triggerEStop(){
+function onCpmSliderChange(val){
+  const newCpm = Math.max(0, Math.min(150, parseInt(val) || 0));
+  setCpmOverride(newCpm);
+}
+
+function adjustCpmOverride(delta){
   const s = readSharedState();
   const mac = getMyMachine(s);
-  mac.status = 'down';
-  s.activeStop = { machineId: MACHINE_ID, machineName: mac.name, startClock: s.clockSec, isEStop: true };
-  uiState.form = { category:'mesin', reason:'EMERGENCY STOP (E-STOP) DIPICU', other:'', isOther:false };
+  if(!mac) return;
+  const current = mac.idealCyclesPerMin || 60;
+  const newCpm = Math.max(0, Math.min(150, current + delta));
+  setCpmOverride(newCpm);
+}
+
+function setCpmOverride(newCpm){
+  const s = readSharedState();
+  const mac = getMyMachine(s);
+  if(!mac) return;
+
+  mac.idealCyclesPerMin = newCpm;
+
+  // Sync to fallback state as well
+  const fallbackMac = standaloneFallback.machines.find(m => m.id === MACHINE_ID);
+  if(fallbackMac) fallbackMac.idealCyclesPerMin = newCpm;
+
   writeSharedState(s);
   render();
 }
