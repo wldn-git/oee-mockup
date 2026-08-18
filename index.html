@@ -440,18 +440,20 @@
     <!-- STEP 2: OTP CODE VERIFICATION -->
     <div id="otpStep2" style="display:none;">
       <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#10B981,#059669);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 16px rgba(16,185,129,0.35);">
-        💬
+        📧
       </div>
-      <div style="font-size:20px;font-weight:700;color:var(--text-hi);letter-spacing:-0.01em;">VERIFIKASI KODE OTP</div>
-      <div style="font-family:var(--mono);font-size:11px;color:var(--text-low);margin-top:4px;margin-bottom:16px;" id="otpTargetSub">Kode OTP terkirim ke WhatsApp / HP Anda</div>
+      <div style="font-size:20px;font-weight:700;color:var(--text-hi);letter-spacing:-0.01em;">VERIFIKASI KODE OTP EMAIL</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text-low);margin-top:4px;margin-bottom:16px;" id="otpTargetSub">Kode OTP terkirim ke Email Anda</div>
 
-      <!-- OTP NOTIFICATION BANNER SIMULATION -->
-      <div style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);padding:12px 14px;border-radius:10px;margin-bottom:18px;text-align:left;font-family:var(--mono);font-size:11px;color:var(--good);">
-        <div style="font-weight:700;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;">
-          <span>💬 NOTIFIKASI OTP GATEWAY:</span>
-          <span id="otpTimerLabel" style="color:var(--warn);">⏳ 03:00</span>
+      <!-- CLEAN EMAIL OTP NOTICE -->
+      <div style="background:rgba(87,148,242,0.12);border:1px solid rgba(87,148,242,0.3);padding:12px 14px;border-radius:10px;margin-bottom:18px;text-align:left;font-family:var(--mono);font-size:11px;color:var(--text-hi);">
+        <div style="font-weight:700;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;color:var(--ember);">
+          <span>📧 EMAIL OTP DIKIRIM:</span>
+          <span id="otpTimerLabel" style="color:var(--warn);">⏳ 05:00</span>
         </div>
-        <div>Kode OTP Anda: <b id="otpGeneratedDisplay" style="font-size:16px;color:var(--text-hi);letter-spacing:0.1em;background:var(--bg-1);padding:2px 8px;border-radius:4px;border:1px solid var(--steel-line);">------</b></div>
+        <div style="font-size:11px;color:var(--text-mid);line-height:1.4;">
+          Kode OTP 6-Digit telah dikirimkan ke Email Anda. Silakan buka <b>Inbox atau Spam Email</b> Anda untuk mengambil kode verifikasi.
+        </div>
       </div>
 
       <div style="margin-bottom:20px;text-align:left;">
@@ -2791,13 +2793,6 @@ function updateAuditBadgeCount(){
 (function initAuditLogs(){
   let logs = [];
   try{ logs = JSON.parse(localStorage.getItem('smartek-audit-trail-logs')) || []; }catch(e){}
-  if(logs.length === 0){
-    logs = [
-      { id:'audit-101', timestamp: '06:00:15 (Shift B Start)', userName: 'Budi Santoso', userCompany: 'PT Mayora Indah Tbk', userEmail: 'budi@mayora.co.id', userPhone: '0812-9876-5432', userRole: 'Plant Manager', otpCode: '849201', deviceInfo: 'Windows PC', status: 'VERIFIED (Sesi 3 Hari)' },
-      { id:'audit-102', timestamp: '08:15:30 (Mid Shift)', userName: 'Rina Wijaya', userCompany: 'PT Unilever Indonesia', userEmail: 'rina@unilever.com', userPhone: '0857-1234-5678', userRole: 'Production Supervisor', otpCode: '592014', deviceInfo: 'Tablet (Android)', status: 'VERIFIED (Sesi 3 Hari)' }
-    ];
-    try{ localStorage.setItem('smartek-audit-trail-logs', JSON.stringify(logs)); }catch(e){}
-  }
   let savedAuth = null;
   try{ 
     const raw = localStorage.getItem(AUTH_STORAGE_KEY); 
