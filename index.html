@@ -1219,62 +1219,43 @@ function fmtHM(s){
    METRICS & ENHANCED TREND HISTORY
 ============================================================ */
 function computeMetrics(){
-  const elapsedSec = Math.max(1, state.clockSec - SHIFT_START);
-
-  let plannedSecTotal = 0;
-  let unplannedSecTotal = 0;
-
-  (state.events || []).forEach(e => {
-    if(e.start <= state.clockSec){
-      const eventEnd = Math.min(state.clockSec, e.end || state.clockSec);
-      const dur = Math.max(0, eventEnd - e.start);
-      if(e.plannedFlag) plannedSecTotal += dur;
-      else unplannedSecTotal += dur;
-    }
-  });
-
-  if(state.activeStop){
-    const activeDur = Math.max(0, state.clockSec - state.activeStop.startClock);
-    const cat = CATEGORIES.find(c=>c.id===state.form.category);
-    if(cat && cat.planned) plannedSecTotal += activeDur;
-    else unplannedSecTotal += activeDur;
+  const machines = state.machines || [];
+  if(machines.length === 0){
+    return { availability: 0, performance: 0, quality: 100, oee: 0, plannedSecTotal: 0, unplannedSecTotal: 0, totalGood: 0, totalReject: 0 };
   }
 
-  const totalDownSec = plannedSecTotal + unplannedSecTotal;
-  const netOperatingSec = Math.max(0, elapsedSec - totalDownSec);
-  const plannedOperatingSec = Math.max(1, elapsedSec - plannedSecTotal);
-
-  const availability = Math.min(100, Math.max(0, (netOperatingSec / plannedOperatingSec) * 100));
-
+  let sumAvail = 0;
+  let sumPerf = 0;
+  let sumQual = 0;
   let totalGood = 0;
   let totalReject = 0;
-  let totalTargetCycles = 0;
+  let sumPlannedSec = 0;
+  let sumUnplannedSec = 0;
 
-  (state.machines || []).forEach(m => {
-    totalGood += m.goodCount || 0;
-    totalReject += m.rejectCount || 0;
-    const idealCyclesPerSec = (m.idealCyclesPerMin || 60) / 60;
-    totalTargetCycles += idealCyclesPerSec * (m.runSec || 0);
+  machines.forEach(mac => {
+    const mm = computeMachineMetrics(mac);
+    sumAvail += mm.availability;
+    sumPerf += mm.performance;
+    sumQual += mm.quality;
+    sumPlannedSec += (mm.plannedSec || 0);
+    sumUnplannedSec += (mm.unplannedSec || 0);
+    totalGood += mac.goodCount || 0;
+    totalReject += mac.rejectCount || 0;
   });
 
-  const totalProduced = totalGood + totalReject;
-  const performance = totalTargetCycles > 0
-    ? Math.min(100, Math.max(0, (totalProduced / totalTargetCycles) * 100))
-    : 91;
-
-  const quality = totalProduced > 0
-    ? Math.min(100, Math.max(0, (totalGood / totalProduced) * 100))
-    : 100;
-
-  const oee = (availability / 100) * (performance / 100) * (quality / 100) * 100;
+  const num = machines.length;
+  const lineAvailability = sumAvail / num;
+  const linePerformance = sumPerf / num;
+  const lineQuality = sumQual / num;
+  const lineOee = (lineAvailability / 100) * (linePerformance / 100) * (lineQuality / 100) * 100;
 
   return {
-    availability: isNaN(availability) ? 0 : availability,
-    performance: isNaN(performance) ? 0 : performance,
-    quality: isNaN(quality) ? 100 : quality,
-    oee: isNaN(oee) ? 0 : oee,
-    plannedSecTotal,
-    unplannedSecTotal,
+    availability: isNaN(lineAvailability) ? 0 : Math.min(100, Math.max(0, lineAvailability)),
+    performance: isNaN(linePerformance) ? 0 : Math.min(100, Math.max(0, linePerformance)),
+    quality: isNaN(lineQuality) ? 100 : Math.min(100, Math.max(0, lineQuality)),
+    oee: isNaN(lineOee) ? 0 : Math.min(100, Math.max(0, lineOee)),
+    plannedSecTotal: Math.round(sumPlannedSec / num),
+    unplannedSecTotal: Math.round(sumUnplannedSec / num),
     totalGood: Math.round(totalGood),
     totalReject: Math.round(totalReject)
   };
