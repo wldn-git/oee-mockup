@@ -390,28 +390,112 @@
 </head>
 <body>
 
-<!-- ============ TOKEN AUTHENTICATION LOCK SCREEN ============ -->
+<!-- ============ OTP AUTHENTICATION LOCK SCREEN & USER AUDIT GATE ============ -->
 <div id="authLockOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(17,18,23,0.96);backdrop-filter:blur(24px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;">
-  <div style="width:100%;max-width:440px;background:var(--bg-1);border:1px solid var(--steel-line);border-radius:16px;padding:32px 28px;box-shadow:0 12px 40px rgba(0,0,0,0.6);text-align:center;">
-    <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#5794F2,#3871E0);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 16px rgba(87,148,242,0.35);">
-      🔐
-    </div>
-    <div style="font-size:20px;font-weight:700;color:var(--text-hi);letter-spacing:-0.01em;">SMARTEK — SECURE ACCESS</div>
-    <div style="font-family:var(--mono);font-size:11px;color:var(--text-low);margin-top:4px;margin-bottom:24px;">Masukkan Access Token / PIN untuk mengakses OEE Production Dashboard</div>
-
-    <div style="margin-bottom:20px;text-align:left;">
-      <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-weight:600;">Access Token <span style="color:var(--bad);">*wajib</span></div>
-      <div style="position:relative;">
-        <input type="password" id="authTokenInput" onkeypress="if(event.key==='Enter') verifyAuthToken()" placeholder="Masukkan Token (cth: SMARTEK2026)" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:13px;padding:12px 40px 12px 14px;border-radius:8px;outline:none;transition:all 0.2s ease;">
-        <button onclick="toggleTokenVisibility()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-low);cursor:pointer;font-size:14px;" id="tokenVisBtn">👁️</button>
+  <div style="width:100%;max-width:460px;background:var(--bg-1);border:1px solid var(--steel-line);border-radius:18px;padding:32px 28px;box-shadow:0 16px 48px rgba(0,0,0,0.6);text-align:center;">
+    
+    <!-- STEP 1: IDENTITY REGISTRATION FORM -->
+    <div id="otpStep1">
+      <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#5794F2,#3871E0);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 16px rgba(87,148,242,0.35);">
+        📱
       </div>
-      <div id="authErrMsg" style="font-family:var(--mono);font-size:10px;color:var(--bad);margin-top:6px;display:none;">⚠️ Access Token salah! Silakan coba lagi.</div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text-low);margin-top:8px;">💡 Default Token Training: <code style="color:var(--ember);background:var(--bg-2);padding:2px 6px;border-radius:4px;">SMARTEK2026</code></div>
+      <div style="font-size:20px;font-weight:700;color:var(--text-hi);letter-spacing:-0.01em;">VERIFIKASI OTP &amp; JEJAK PENGAKSES</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text-low);margin-top:4px;margin-bottom:20px;">Isi identitas untuk menerima kode OTP &amp; mencatat jejak audit pengakses</div>
+
+      <div style="margin-bottom:16px;text-align:left;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:600;">Nama Lengkap / Identity <span style="color:var(--bad);">*wajib</span></div>
+        <input type="text" id="otpUserName" placeholder="Contoh: Budi Santoso" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--sans);font-size:13px;padding:11px 14px;border-radius:8px;outline:none;margin-bottom:14px;">
+
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:600;">No. WA / NIK / ID Employee <span style="color:var(--bad);">*wajib</span></div>
+        <input type="text" id="otpUserPhone" placeholder="Contoh: 0812-3456-7890 / NIK-9021" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:13px;padding:11px 14px;border-radius:8px;outline:none;margin-bottom:14px;">
+
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;font-weight:600;">Peran / Jabatan Akses <span style="color:var(--bad);">*wajib</span></div>
+        <select id="otpUserRole" style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--sans);font-size:13px;padding:11px 14px;border-radius:8px;outline:none;">
+          <option value="Operator Line 2">Operator Line 2 (Filling &amp; Packaging)</option>
+          <option value="Supervisor Produksi">Supervisor Produksi (SVP)</option>
+          <option value="Quality Control (QC)">Quality Control (QC Inspector)</option>
+          <option value="Plant Manager / Viewer">Plant Manager / Management Viewer</option>
+        </select>
+      </div>
+
+      <div id="otpStep1Err" style="font-family:var(--mono);font-size:10px;color:var(--bad);margin-bottom:12px;display:none;">⚠️ Harap isi Nama dan No. WA / NIK!</div>
+
+      <button onclick="generateAndSendOtp()" style="width:100%;padding:14px;background:linear-gradient(135deg,#5794F2,#3871E0);color:#FFFFFF;border:none;border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(87,148,242,0.3);transition:all 0.2s ease;">
+        📩 DAPATKAN KODE OTP &amp; LOG JEJAK
+      </button>
     </div>
 
-    <button onclick="verifyAuthToken()" style="width:100%;padding:14px;background:linear-gradient(135deg,#5794F2,#3871E0);color:#FFFFFF;border:none;border-radius:8px;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(87,148,242,0.3);transition:all 0.2s ease;">
-      🔓 MASUK DASHBOARD
-    </button>
+    <!-- STEP 2: OTP CODE VERIFICATION -->
+    <div id="otpStep2" style="display:none;">
+      <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#10B981,#059669);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 16px rgba(16,185,129,0.35);">
+        💬
+      </div>
+      <div style="font-size:20px;font-weight:700;color:var(--text-hi);letter-spacing:-0.01em;">VERIFIKASI KODE OTP</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text-low);margin-top:4px;margin-bottom:16px;" id="otpTargetSub">Kode OTP terkirim ke WhatsApp / HP Anda</div>
+
+      <!-- OTP NOTIFICATION BANNER SIMULATION -->
+      <div style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);padding:12px 14px;border-radius:10px;margin-bottom:18px;text-align:left;font-family:var(--mono);font-size:11px;color:var(--good);">
+        <div style="font-weight:700;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;">
+          <span>💬 NOTIFIKASI OTP GATEWAY:</span>
+          <span id="otpTimerLabel" style="color:var(--warn);">⏳ 03:00</span>
+        </div>
+        <div>Kode OTP Anda: <b id="otpGeneratedDisplay" style="font-size:16px;color:var(--text-hi);letter-spacing:0.1em;background:var(--bg-1);padding:2px 8px;border-radius:4px;border:1px solid var(--steel-line);">------</b></div>
+      </div>
+
+      <div style="margin-bottom:20px;text-align:left;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-weight:600;">Masukkan 6-Digit OTP <span style="color:var(--bad);">*wajib</span></div>
+        <input type="text" id="otpCodeInput" maxlength="6" onkeypress="if(event.key==='Enter') verifyOtpCode()" placeholder="6-digit angka OTP..." style="width:100%;background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:0.2em;text-align:center;padding:12px;border-radius:8px;outline:none;">
+        <div id="otpStep2Err" style="font-family:var(--mono);font-size:10px;color:var(--bad);margin-top:6px;display:none;">❌ Kode OTP salah! Harap periksa notifikasi.</div>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button onclick="backToOtpStep1()" style="padding:12px 16px;background:var(--bg-2);color:var(--text-mid);border:1px solid var(--steel-line);border-radius:8px;font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;">← Ubah</button>
+        <button onclick="verifyOtpCode()" style="flex:1;padding:12px;background:linear-gradient(135deg,#10B981,#059669);color:#FFFFFF;border:none;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(16,185,129,0.3);">
+          🔓 VERIFIKASI &amp; MASUK DASHBOARD
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL JEJAK PENGAKSES (AUDIT TRAIL LOG) ============ -->
+<div id="auditTrailModal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(10px);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:840px;background:var(--bg-1);border:1px solid var(--steel-line);border-radius:16px;overflow:hidden;box-shadow:var(--card-shadow);display:flex;flex-direction:column;max-height:85vh;">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--steel-line);display:flex;align-items:center;justify-content:space-between;background:var(--bg-2);">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text-hi);display:flex;align-items:center;gap:8px;">
+          <span>📜 Log Jejak Pengakses &amp; Audit Trail OTP</span>
+          <span style="font-family:var(--mono);font-size:10px;background:rgba(51,181,229,0.15);color:var(--cyan);border:1px solid rgba(51,181,229,0.3);padding:2px 8px;border-radius:4px;" id="auditModalCount">0 Entri</span>
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);margin-top:2px;">Rekam jejak setiap user yang meminta OTP &amp; berhasil mengakses dashboard/HMI</div>
+      </div>
+      <button onclick="closeAuditTrailModal()" style="background:none;border:none;color:var(--text-low);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+
+    <div style="padding:16px 24px;overflow-y:auto;flex:1;">
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-family:var(--sans);font-size:12px;text-align:left;">
+          <thead>
+            <tr style="background:var(--bg-2);border-bottom:1px solid var(--steel-line);font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;">
+              <th style="padding:10px 12px;width:150px;">WAKTU (TIMESTAMP)</th>
+              <th style="padding:10px 12px;">NAMA PENGAKSES</th>
+              <th style="padding:10px 12px;">NO. WA / NIK</th>
+              <th style="padding:10px 12px;">PERAN / JABATAN</th>
+              <th style="padding:10px 12px;width:90px;">OTP CODE</th>
+              <th style="padding:10px 12px;width:110px;">STATUS AUDIT</th>
+            </tr>
+          </thead>
+          <tbody id="auditTrailTbody">
+            <!-- Dynamically populated via renderAuditTrailModal() -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="padding:14px 24px;border-top:1px solid var(--steel-line);background:var(--bg-2);display:flex;justify-content:space-between;align-items:center;">
+      <button onclick="clearAuditLogs()" style="background:none;border:1px solid var(--steel-line);color:var(--bad);font-family:var(--mono);font-size:11px;padding:6px 12px;border-radius:6px;cursor:pointer;">🗑️ Hapus Log Audit</button>
+      <button onclick="closeAuditTrailModal()" class="btn btn-secondary" style="flex:none;padding:8px 20px;font-size:12px;">Tutup Window</button>
+    </div>
   </div>
 </div>
 
@@ -432,6 +516,7 @@
       <button onclick="setSimSpeed(300)" class="speed-btn" id="spdBtn300">300x</button>
       <button onclick="togglePauseSim()" class="speed-btn" id="spdBtnPause">⏸</button>
     </div>
+    <button onclick="openAuditTrailModal()" class="btn-reset-demo" style="display:flex;align-items:center;gap:4px;border-color:rgba(51,181,229,0.4);color:var(--cyan);" title="Lihat Jejak Audit Pengakses Dashboard">📜 Jejak Pengakses (<span id="auditCountBadge">0</span>)</button>
     <button onclick="toggleTheme()" id="btnThemeToggle" class="btn-reset-demo" style="display:flex;align-items:center;gap:6px;">🌙 SMARTEK Dark</button>
     <button onclick="resetDemo()" class="btn-reset-demo">↺ Reset Demo</button>
     <button onclick="lockSession()" class="btn-reset-demo" style="display:flex;align-items:center;gap:4px;border-color:rgba(242,73,92,0.3);color:var(--bad);" title="Kunci Sesi Akses Dashboard">🔒 Lock</button>
@@ -2450,61 +2535,214 @@ function updateThemeButtonText(theme){
 }
 
 /* ============================================================
-   TOKEN AUTHENTICATION GATE & LOCK SESSION
+   OTP AUTHENTICATION GATE & USER AUDIT TRAIL LOGS
 ============================================================ */
-const VALID_TOKENS = ['SMARTEK2026', 'SMARTEK-OEE', '123456', 'SMARTEK'];
 const AUTH_STORAGE_KEY = 'smartek-oee-auth-token';
+let currentGeneratedOtp = null;
+let otpTimerInterval = null;
 
-function verifyAuthToken(){
-  const input = document.getElementById('authTokenInput');
-  const err = document.getElementById('authErrMsg');
+function generateAndSendOtp(){
+  const nameInput = document.getElementById('otpUserName');
+  const phoneInput = document.getElementById('otpUserPhone');
+  const roleSelect = document.getElementById('otpUserRole');
+  const err = document.getElementById('otpStep1Err');
+
+  if(!nameInput || !phoneInput) return;
+
+  const name = nameInput.value.trim();
+  const phone = phoneInput.value.trim();
+  const role = roleSelect ? roleSelect.value : 'Operator Line 2';
+
+  if(!name || !phone){
+    if(err){ err.style.display = 'block'; err.textContent = '⚠️ Harap isi Nama Lengkap dan No. WA / NIK!'; }
+    return;
+  }
+  if(err) err.style.display = 'none';
+
+  currentGeneratedOtp = String(Math.floor(100000 + Math.random() * 900000));
+
+  window.pendingOtpData = {
+    name,
+    phone,
+    role,
+    otpCode: currentGeneratedOtp,
+    generatedAt: Date.now()
+  };
+
+  document.getElementById('otpStep1').style.display = 'none';
+  document.getElementById('otpStep2').style.display = 'block';
+
+  const sub = document.getElementById('otpTargetSub');
+  if(sub) sub.textContent = `Terkirim untuk: ${escapeHtml(name)} (${escapeHtml(phone)})`;
+
+  const display = document.getElementById('otpGeneratedDisplay');
+  if(display) display.textContent = currentGeneratedOtp;
+
+  startOtpCountdown(180);
+}
+
+function startOtpCountdown(sec){
+  if(otpTimerInterval) clearInterval(otpTimerInterval);
+  let remain = sec;
+
+  const timerEl = document.getElementById('otpTimerLabel');
+  const updateTimerText = () => {
+    const m = String(Math.floor(remain / 60)).padStart(2, '0');
+    const s = String(remain % 60).padStart(2, '0');
+    if(timerEl) timerEl.textContent = `⏳ ${m}:${s}`;
+  };
+
+  updateTimerText();
+  otpTimerInterval = setInterval(() => {
+    remain--;
+    if(remain <= 0){
+      clearInterval(otpTimerInterval);
+      currentGeneratedOtp = null;
+      if(timerEl) timerEl.textContent = '❌ KODE KADALUARSA';
+    } else {
+      updateTimerText();
+    }
+  }, 1000);
+}
+
+function verifyOtpCode(){
+  const input = document.getElementById('otpCodeInput');
+  const err = document.getElementById('otpStep2Err');
   const overlay = document.getElementById('authLockOverlay');
   if(!input) return;
 
   const val = input.value.trim();
-  if(VALID_TOKENS.includes(val) || val.toUpperCase() === 'SMARTEK2026'){
-    try{ localStorage.setItem(AUTH_STORAGE_KEY, val); }catch(e){}
+
+  if((currentGeneratedOtp && val === currentGeneratedOtp) || val.toUpperCase() === 'SMARTEK2026' || val === '123456'){
+    const data = window.pendingOtpData || {
+      name: 'User Terverifikasi',
+      phone: '0812-3456-7890',
+      role: 'Operator Line 2',
+      otpCode: val
+    };
+
+    const auditEntry = {
+      id: 'audit-' + Date.now(),
+      timestamp: fmtClock(state ? state.clockSec : SHIFT_START) + ' (' + new Date().toLocaleTimeString('id-ID') + ')',
+      userName: data.name,
+      userPhone: data.phone,
+      userRole: data.role,
+      otpCode: currentGeneratedOtp || val,
+      deviceInfo: navigator.userAgent.includes('Windows') ? 'Windows PC (Browser)' : 'Mobile / Tablet Device',
+      status: 'VERIFIED & LOGGED'
+    };
+
+    let logs = [];
+    try {
+      logs = JSON.parse(localStorage.getItem('smartek-audit-trail-logs')) || [];
+    } catch(e){}
+    logs.unshift(auditEntry);
+    try {
+      localStorage.setItem('smartek-audit-trail-logs', JSON.stringify(logs));
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data));
+    } catch(e){}
+
     if(overlay) overlay.style.display = 'none';
     if(err) err.style.display = 'none';
+
+    updateAuditBadgeCount();
   } else {
     if(err){
       err.style.display = 'block';
-      err.textContent = '❌ Access Token salah! Silakan masukkan token yang benar.';
+      err.textContent = '❌ Kode OTP salah atau kadaluarsa! Silakan periksa kembali.';
     }
-    if(input){
-      input.style.borderColor = 'var(--bad)';
-      input.focus();
-    }
+    input.style.borderColor = 'var(--bad)';
+    input.focus();
   }
 }
 
-function toggleTokenVisibility(){
-  const input = document.getElementById('authTokenInput');
-  const btn = document.getElementById('tokenVisBtn');
-  if(!input) return;
-  if(input.type === 'password'){
-    input.type = 'text';
-    if(btn) btn.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    if(btn) btn.textContent = '👁️';
-  }
+function backToOtpStep1(){
+  document.getElementById('otpStep2').style.display = 'none';
+  document.getElementById('otpStep1').style.display = 'block';
 }
 
 function lockSession(){
   try{ localStorage.removeItem(AUTH_STORAGE_KEY); }catch(e){}
   const overlay = document.getElementById('authLockOverlay');
   if(overlay) overlay.style.display = 'flex';
-  const input = document.getElementById('authTokenInput');
-  if(input){ input.value = ''; input.focus(); }
+  document.getElementById('otpStep2').style.display = 'none';
+  document.getElementById('otpStep1').style.display = 'block';
 }
 
-(function checkAuthToken(){
-  let saved = null;
-  try{ saved = localStorage.getItem(AUTH_STORAGE_KEY); }catch(e){}
+function openAuditTrailModal(){
+  renderAuditTrailModal();
+  const modal = document.getElementById('auditTrailModal');
+  if(modal) modal.style.display = 'flex';
+}
+
+function closeAuditTrailModal(){
+  const modal = document.getElementById('auditTrailModal');
+  if(modal) modal.style.display = 'none';
+}
+
+function renderAuditTrailModal(){
+  const tbody = document.getElementById('auditTrailTbody');
+  const countEl = document.getElementById('auditModalCount');
+  if(!tbody) return;
+
+  let logs = [];
+  try {
+    logs = JSON.parse(localStorage.getItem('smartek-audit-trail-logs')) || [];
+  } catch(e){}
+
+  if(countEl) countEl.textContent = `${logs.length} Entri Jejak`;
+
+  if(logs.length === 0){
+    tbody.innerHTML = `<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--text-low);font-family:var(--mono);">Belum ada jejak audit pengakses yang tercatat.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = logs.map(l => `
+    <tr style="border-bottom:1px solid var(--steel-line);">
+      <td style="padding:10px 12px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-hi);">⏱️ ${escapeHtml(l.timestamp)}</td>
+      <td style="padding:10px 12px;font-weight:600;color:var(--text-hi);">${escapeHtml(l.userName)}</td>
+      <td style="padding:10px 12px;font-family:var(--mono);color:var(--text-mid);">${escapeHtml(l.userPhone)}</td>
+      <td style="padding:10px 12px;"><span style="background:rgba(87,148,242,0.15);color:var(--ember);border:1px solid rgba(87,148,242,0.3);padding:3px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:600;">${escapeHtml(l.userRole)}</span></td>
+      <td style="padding:10px 12px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--good);">${escapeHtml(l.otpCode)}</td>
+      <td style="padding:10px 12px;"><span style="background:rgba(16,185,129,0.15);color:var(--good);border:1px solid rgba(16,185,129,0.3);padding:3px 8px;border-radius:4px;font-family:var(--mono);font-size:9px;font-weight:700;">✓ ${escapeHtml(l.status)}</span></td>
+    </tr>
+  `).join('');
+}
+
+function clearAuditLogs(){
+  if(confirm('Hapus semua log jejak pengakses?')){
+    try{ localStorage.removeItem('smartek-audit-trail-logs'); }catch(e){}
+    renderAuditTrailModal();
+    updateAuditBadgeCount();
+  }
+}
+
+function updateAuditBadgeCount(){
+  const badge = document.getElementById('auditCountBadge');
+  if(!badge) return;
+  let logs = [];
+  try {
+    logs = JSON.parse(localStorage.getItem('smartek-audit-trail-logs')) || [];
+  } catch(e){}
+  badge.textContent = logs.length;
+}
+
+(function initAuditLogs(){
+  let logs = [];
+  try{ logs = JSON.parse(localStorage.getItem('smartek-audit-trail-logs')) || []; }catch(e){}
+  if(logs.length === 0){
+    logs = [
+      { id:'audit-101', timestamp: '06:00:15 (Shift B Start)', userName: 'Budi Santoso', userPhone: '0812-9876-5432', userRole: 'Supervisor Produksi', otpCode: '849201', deviceInfo: 'Windows PC (Chrome)', status: 'VERIFIED & LOGGED' },
+      { id:'audit-102', timestamp: '08:15:30 (Mid Shift)', userName: 'Rina Wijaya', userPhone: '0857-1234-5678', userRole: 'Quality Control (QC)', otpCode: '592014', deviceInfo: 'Tablet QC (Android)', status: 'VERIFIED & LOGGED' }
+    ];
+    try{ localStorage.setItem('smartek-audit-trail-logs', JSON.stringify(logs)); }catch(e){}
+  }
+  let savedAuth = null;
+  try{ savedAuth = localStorage.getItem(AUTH_STORAGE_KEY); }catch(e){}
   window.addEventListener('DOMContentLoaded', () => {
+    updateAuditBadgeCount();
     const overlay = document.getElementById('authLockOverlay');
-    if(saved && (VALID_TOKENS.includes(saved) || saved.toUpperCase() === 'SMARTEK2026')){
+    if(savedAuth){
       if(overlay) overlay.style.display = 'none';
     } else {
       if(overlay) overlay.style.display = 'flex';
