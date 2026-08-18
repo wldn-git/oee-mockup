@@ -446,7 +446,6 @@
   <div class="hmi-footer">
     <div class="hw-btns">
       <button class="hw-btn" onclick="simulateManualStop()">⏸ SIMULASI STOP</button>
-      <button class="hw-btn" style="border-color:var(--warn);color:var(--warn);" onclick="simulateRejectFromHmi()">⚠️ REJECT QC</button>
       <button class="hw-btn" onclick="resetShift()">↺ RESET SHIFT</button>
     </div>
     <div class="footer-note">SMARTEK — TRAINING · HMI PANEL MOCKUP · FILLER UNIT A · IEC 61131 STYLE REFERENCE</div>
@@ -870,6 +869,11 @@ function triggerHmiManualReject(evt){
   const reason = sel ? sel.value : 'Pemeriksaan QC Manual Reject';
 
   mac.rejectCount = Math.round((mac.rejectCount || 0) + 1);
+
+  // Sync to fallback state as well
+  const fallbackMac = standaloneFallback.machines.find(m => m.id === MACHINE_ID);
+  if(fallbackMac) fallbackMac.rejectCount = mac.rejectCount;
+
   const binNo = MACHINE_ID==='filler-a' ? '1' : (MACHINE_ID==='capper' ? '2' : (MACHINE_ID==='labeler' ? '3' : '4'));
 
   if(!s.rejectLogs) s.rejectLogs = [];
@@ -888,10 +892,13 @@ function triggerHmiManualReject(evt){
   writeSharedState(s);
   render();
 
+  const rejValEl = document.getElementById('rejectVal');
+  if(rejValEl) rejValEl.textContent = Math.round(mac.rejectCount);
+
   if(evt && evt.currentTarget){
     const btn = evt.currentTarget;
     const orig = btn.innerHTML;
-    btn.innerHTML = '✓ TERKIRIM!';
+    btn.innerHTML = '✓ REJECT +1!';
     btn.style.background = '#10B981';
     setTimeout(()=>{
       btn.innerHTML = orig;

@@ -1178,11 +1178,11 @@ function pullExternalUpdates(){
             localMac.status = extMac.status;
             changed = true;
           }
-          // Only pull external counts if local machine has lower count (e.g. updated from HMI panel)
-          if((extMac.goodCount || 0) > (localMac.goodCount || 0)){
-            localMac.goodCount = extMac.goodCount;
-            localMac.rejectCount = extMac.rejectCount;
-            localMac.runSec = extMac.runSec;
+          // Pull external counts if goodCount OR rejectCount is higher (e.g. updated from HMI panel)
+          if((extMac.goodCount || 0) > (localMac.goodCount || 0) || (extMac.rejectCount || 0) > (localMac.rejectCount || 0)){
+            localMac.goodCount = Math.max(localMac.goodCount || 0, extMac.goodCount || 0);
+            localMac.rejectCount = Math.max(localMac.rejectCount || 0, extMac.rejectCount || 0);
+            localMac.runSec = Math.max(localMac.runSec || 0, extMac.runSec || 0);
             changed = true;
           }
         }
