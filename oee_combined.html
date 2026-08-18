@@ -416,6 +416,8 @@
 
 <div class="tabnav">
   <button class="tab-btn active" id="tabBtnDashboard" onclick="showTab('dashboard', this)">📊 Dashboard OEE</button>
+  <button class="tab-btn" id="tabBtnPerformance" onclick="showTab('performance', this)">🚀 Detail Performance</button>
+  <button class="tab-btn" id="tabBtnQuality" onclick="showTab('quality', this)">✨ Detail Quality <span class="badge" id="rejectBadge" style="display:none;background:var(--bad);">0</span></button>
   <button class="tab-btn" id="tabBtnEntry" onclick="showTab('entry', this)">📋 Management Downtime <span class="badge" id="pendingBadge" style="display:none;">0</span></button>
 </div>
 
@@ -475,7 +477,7 @@
       </div>
 
       <div class="hero-breakdown">
-        <div class="factor">
+        <div class="factor" onclick="scrollToDowntimeGantt()" style="cursor:pointer;" title="Klik untuk lihat Gantt Timeline Downtime">
           <div class="factor-head">
             <span class="factor-name">Availability</span>
             <span class="factor-icon" style="color:var(--warn)">⚡</span>
@@ -484,25 +486,25 @@
           <div class="factor-bar-track"><div class="factor-bar avail" id="availBar" style="width:86%"></div></div>
           <div class="factor-note" id="availNote">0m planned · 0m unplanned</div>
         </div>
-        <div class="factor">
+        <div class="factor" onclick="showTab('performance', document.getElementById('tabBtnPerformance'))" style="cursor:pointer;" title="Klik untuk lihat Detail Tren & Speed Loss Performance">
           <div class="factor-head">
-            <span class="factor-name">Performance</span>
+            <span class="factor-name">Performance →</span>
             <span class="factor-icon" style="color:var(--ember)">🚀</span>
           </div>
           <div class="factor-val" id="perfVal" style="color:var(--ember)">91%</div>
           <div class="factor-bar-track"><div class="factor-bar perf" id="perfBar" style="width:91%"></div></div>
-          <div class="factor-note">Live dari kecepatan aktual mesin</div>
+          <div class="factor-note">Kecepatan &amp; Speed Loss (Klik detail)</div>
         </div>
-        <div class="factor">
+        <div class="factor" onclick="showTab('quality', document.getElementById('tabBtnQuality'))" style="cursor:pointer;" title="Klik untuk lihat Stream Reject & Pareto Defect">
           <div class="factor-head">
-            <span class="factor-name">Quality</span>
+            <span class="factor-name">Quality →</span>
             <span class="factor-icon" style="color:var(--good)">✨</span>
           </div>
           <div class="factor-val" id="qualVal" style="color:var(--good)">99%</div>
           <div class="factor-bar-track"><div class="factor-bar qual" id="qualBar" style="width:99%"></div></div>
-          <div class="factor-note" id="qualNote">Reject 0 / 0 pcs</div>
+          <div class="factor-note" id="qualNote">Reject 0 / 0 pcs (Klik detail)</div>
         </div>
-        <div class="factor">
+        <div class="factor" onclick="showTab('quality', document.getElementById('tabBtnQuality'))" style="cursor:pointer;" title="Klik untuk lihat Stream Log Reject">
           <div class="factor-head">
             <span class="factor-name">Produksi Live</span>
             <span class="factor-icon" style="color:var(--cyan)">📦</span>
@@ -670,6 +672,207 @@
   </div>
 </div>
 
+<!-- ============ VIEW 3: DETAIL PERFORMANCE & SPEED LOSS ============ -->
+<div class="view" id="view-performance">
+  <div class="wrap">
+    <div class="section-label">Detail Performance — Analisis Kecepatan Mesin &amp; Speed Loss (Shift B)</div>
+
+    <!-- KPI Summary Row for Performance -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+      <div class="panel" style="padding:16px;display:flex;align-items:center;gap:14px;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(87,148,242,0.15);border:1px solid rgba(87,148,242,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;">🚀</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);font-weight:600;">PERFORMANCE RATE</div>
+          <div style="font-size:24px;font-weight:700;color:var(--ember);margin-top:2px;" id="perfDetailRate">91.4%</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text-mid);" id="perfDetailSub">Target: 95.0% · Delta -3.6%</div>
+        </div>
+      </div>
+      <div class="panel" style="padding:16px;display:flex;align-items:center;gap:14px;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(51,181,229,0.15);border:1px solid rgba(51,181,229,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;">⚡</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);font-weight:600;">KECEPATAN AKTUAL LINE</div>
+          <div style="font-size:24px;font-weight:700;color:var(--cyan);margin-top:2px;" id="perfDetailCpm">52.8 <span style="font-size:13px;font-weight:500;">CPM</span></div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text-mid);">Ideal Line Target: 60 CPM</div>
+        </div>
+      </div>
+      <div class="panel" style="padding:16px;display:flex;align-items:center;gap:14px;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(255,120,10,0.15);border:1px solid rgba(255,120,10,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;">📉</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);font-weight:600;">KERUGIAN SPEED LOSS</div>
+          <div style="font-size:24px;font-weight:700;color:var(--warn);margin-top:2px;" id="perfDetailSpeedLoss">-142 <span style="font-size:13px;font-weight:500;">PCS</span></div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text-mid);">Potensi Hilang akibat Kecepatan Melambat</div>
+        </div>
+      </div>
+      <div class="panel" style="padding:16px;display:flex;align-items:center;gap:14px;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(242,201,76,0.15);border:1px solid rgba(242,201,76,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;">⏱️</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);font-weight:600;">MICRO-STOPPAGES</div>
+          <div style="font-size:24px;font-weight:700;color:var(--yellow);margin-top:2px;" id="perfDetailMicroStops">4 <span style="font-size:13px;font-weight:500;">Kali</span></div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text-mid);" id="perfDetailMicroLoss">Total Henti Singkat: ~8m (-38 pcs)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPEED LOSS GANTT CHART PANEL -->
+    <div class="panel" style="margin-bottom:24px;">
+      <div class="panel-head" style="flex-wrap:wrap;gap:12px;">
+        <div>
+          <div class="panel-title">📊 Gantt Chart Speed Degradation &amp; Penurunan Performa per Mesin</div>
+          <div class="panel-meta" style="margin-top:4px;">Timeline kondisi kecepatan mesin sepanjang Shift B (06:00 — 14:00)</div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;font-family:var(--mono);font-size:10px;color:var(--text-mid);font-weight:500;">
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#73BF69;display:inline-block;"></span> Optimal (&gt;95%)</span>
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#F2C94C;display:inline-block;"></span> Speed Loss (70-95%)</span>
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#FF780A;display:inline-block;"></span> Micro-stop (&lt;2m)</span>
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#F2495C;display:inline-block;"></span> Breakdown DT</span>
+        </div>
+      </div>
+
+      <div style="background:var(--bg-2);border:1px solid var(--steel-line);border-radius:10px;padding:16px;">
+        <div id="speedGanttTracks" style="display:flex;flex-direction:column;gap:12px;">
+          <!-- Dynamically populated via renderSpeedGanttChart() -->
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px;padding-left:140px;font-family:var(--mono);font-size:10px;color:var(--text-low);font-weight:600;">
+          <span>06:00</span><span>07:00</span><span>08:00</span><span>09:00</span><span>10:00</span><span>11:00</span><span>12:00</span><span>13:00</span><span style="text-align:right;">14:00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPEED TREND LINE CHART -->
+    <div class="panel" style="margin-bottom:24px;">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">📉 Trend Penurunan Kecepatan Line &amp; Speed Drop Analysis</div>
+          <div class="panel-meta" style="margin-top:4px;">Fluktuasi Kecepatan Aktual (CPM) vs Target Nominal (60 CPM)</div>
+        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--ember);font-weight:600;" id="perfBottleneckTag">⚠️ Bottleneck: Filler Unit A (Rata-rata 87.5% Speed)</div>
+      </div>
+
+      <div style="position:relative;height:200px;background:var(--bg-2);border-radius:8px;border:1px solid var(--steel-line);padding:10px;">
+        <svg id="speedTrendSvg" viewBox="0 0 800 180" preserveAspectRatio="none" style="width:100%;height:100%;">
+          <!-- Rendered dynamically -->
+        </svg>
+      </div>
+    </div>
+
+    <!-- BOTTLENECK & SPEED LOSS ANALYSIS CARDS -->
+    <div class="section-label">Status Kecepatan per Mesin &amp; Analisis Speed Loss</div>
+    <div class="machines" id="speedMachinesGrid"></div>
+  </div>
+</div>
+
+<!-- ============ VIEW 4: DETAIL QUALITY & TIMESTAMP REJECT LOG ============ -->
+<div class="view" id="view-quality">
+  <div class="wrap">
+    <div class="section-label">Detail Quality — Deteksi Presisi Reject &amp; Pareto Defect (Shift B)</div>
+
+    <!-- KPI Summary Row for Quality -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+      <div class="panel" style="padding:16px;display:flex;align-items:center;gap:14px;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(115,191,105,0.15);border:1px solid rgba(115,191,105,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;">✨</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);font-weight:600;">QUALITY RATE</div>
+          <div style="font-size:24px;font-weight:700;color:var(--good);margin-top:2px;" id="qualDetailRate">99.2%</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text-mid);" id="qualDetailSub">Target Quality: 99.0% (Lolos Spek)</div>
+        </div>
+      </div>
+      <div class="panel" style="padding:16px;display:flex;align-items:center;gap:14px;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(242,73,92,0.15);border:1px solid rgba(242,73,92,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;">🎯</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);font-weight:600;">FIRST PASS YIELD (FPY)</div>
+          <div style="font-size:24px;font-weight:700;color:var(--bad);margin-top:2px;" id="qualDetailFpy">99.2%</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text-mid);">Produk Sekali Jadi Tanpa Rework</div>
+        </div>
+      </div>
+      <div class="panel" style="padding:16px;display:flex;align-items:center;gap:14px;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(255,120,10,0.15);border:1px solid rgba(255,120,10,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;">🗑️</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);font-weight:600;">TOTAL REJECT SHIFT</div>
+          <div style="font-size:24px;font-weight:700;color:var(--warn);margin-top:2px;" id="qualDetailRejectCount">0 <span style="font-size:13px;font-weight:500;">PCS</span></div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text-mid);" id="qualDetailScrapRate">Scrap Rate: 0.00%</div>
+        </div>
+      </div>
+      <div class="panel" style="padding:16px;display:flex;align-items:center;gap:14px;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(51,181,229,0.15);border:1px solid rgba(51,181,229,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;">🔍</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-low);font-weight:600;">STATION PALING BANYAK DEFECT</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text-hi);margin-top:4px;" id="qualDetailTopStation">Filler Unit A</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text-mid);" id="qualDetailTopDefect">Underfill Volume (&lt;250ml)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STREAM LOG REJECT TABLE & TIMESTAMP DETECTION -->
+    <div class="panel" style="margin-bottom:24px;">
+      <div class="panel-head" style="flex-wrap:wrap;gap:12px;">
+        <div>
+          <div class="panel-title">⏱️ Stream Log Reject Presisi (Deteksi Timestamp)</div>
+          <div class="panel-meta" style="margin-top:4px;">Catatan otomatis setiap unit reject terdeteksi sensor QC / HMI</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="text" id="rejectSearchInput" oninput="renderRejectLogTable()" placeholder="Cari defect atau timestamp..." style="background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:11px;padding:6px 12px;border-radius:6px;outline:none;width:200px;">
+          <select id="rejectMachineFilter" onchange="renderRejectLogTable()" style="background:var(--bg-2);border:1px solid var(--steel-line);color:var(--text-hi);font-family:var(--mono);font-size:11px;padding:6px 12px;border-radius:6px;outline:none;">
+            <option value="all">Semua Stasiun</option>
+            <option value="filler-a">Filler Unit A</option>
+            <option value="capper">Capping Machine</option>
+            <option value="labeler">Labeler Unit</option>
+            <option value="cartoner">Cartoner</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-family:var(--sans);font-size:12px;text-align:left;">
+          <thead>
+            <tr style="background:var(--bg-2);border-bottom:1px solid var(--steel-line);font-family:var(--mono);font-size:10px;color:var(--text-low);text-transform:uppercase;letter-spacing:0.04em;">
+              <th style="padding:10px 14px;width:140px;">WAKTU (TIMESTAMP)</th>
+              <th style="padding:10px 14px;">MESIN / STASIUN</th>
+              <th style="padding:10px 14px;">KATEGORI DEFECT / CACAT</th>
+              <th style="padding:10px 14px;text-align:right;width:100px;">JUMLAH</th>
+              <th style="padding:10px 14px;">QC EJECTION ACTION</th>
+              <th style="padding:10px 14px;width:130px;">STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="rejectLogTbody">
+            <!-- Dynamically populated via renderRejectLogTable() -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PARETO & REJECT SPIKE TIMELINE GRID -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+      <!-- REJECT SPIKE TIMELINE CHART -->
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">📈 Shift Defect Spike Timeline</div>
+            <div class="panel-meta" style="margin-top:4px;">Sebaran kejadian reject (06:00 - 14:00)</div>
+          </div>
+        </div>
+        <div style="position:relative;height:180px;background:var(--bg-2);border-radius:8px;border:1px solid var(--steel-line);padding:10px;">
+          <svg id="rejectSpikeSvg" viewBox="0 0 400 150" preserveAspectRatio="none" style="width:100%;height:100%;">
+            <!-- Dynamically rendered spike bars -->
+          </svg>
+        </div>
+      </div>
+
+      <!-- PARETO CHART CAUSE BREAKDOWN -->
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">📊 Pareto Diagram Penyebab Defect</div>
+            <div class="panel-meta" style="margin-top:4px;">Proporsi alasan reject terbanyak</div>
+          </div>
+        </div>
+        <div id="paretoChartContainer" style="display:flex;flex-direction:column;gap:10px;padding:4px 0;">
+          <!-- Dynamically rendered pareto bars -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ VIEW 2: DOWNTIME MANAGEMENT & VALIDATION ============ -->
 <div class="view" id="view-entry">
   <div class="entry-stage">
@@ -715,6 +918,7 @@ let state = {
     { id:'cartoner', name:'Cartoner', line:'Line 2 · Secondary Pack', status:'run', idealCyclesPerMin:40, goodCount:0, rejectCount:0, runSec:0 },
   ],
   events: JSON.parse(JSON.stringify(DEFAULT_PLANNED_BREAKS)),
+  rejectLogs: [],
   activeStop: null, // {machineId, machineName, startClock, snoozedUntil}
   selectedMachineFilter: null,
   form: { category:'mesin', reason: REASON_PRESETS.mesin[0], other:'', isOther:false },
@@ -756,6 +960,7 @@ function pushStateToStorage(){
       clockSec: state.clockSec,
       machines: state.machines,
       events: state.events,
+      rejectLogs: state.rejectLogs,
       activeStop: state.activeStop,
       savedAt: lastPushTime,
     };
@@ -782,6 +987,17 @@ function pullExternalUpdates(){
         changed = true;
       }
     });
+
+    if(ext.rejectLogs && Array.isArray(ext.rejectLogs)){
+      const knownRejIds = new Set((state.rejectLogs||[]).map(r=>r.id));
+      ext.rejectLogs.forEach(r=>{
+        if(!knownRejIds.has(r.id)){
+          if(!state.rejectLogs) state.rejectLogs = [];
+          state.rejectLogs.unshift(r);
+          changed = true;
+        }
+      });
+    }
 
     if(ext.activeStop !== undefined){
       if(JSON.stringify(state.activeStop) !== JSON.stringify(ext.activeStop)){
@@ -1460,11 +1676,385 @@ function render(){
     if(pending>0){ badge.style.display='inline-block'; badge.textContent=pending; } else { badge.style.display='none'; }
   }
 
+  // Trigger active tab view rendering
+  if(state.tab === 'performance'){
+    try { renderPerformanceView(); } catch(e){ console.error("renderPerformanceView error:", e); }
+  } else if(state.tab === 'quality'){
+    try { renderQualityView(); } catch(e){ console.error("renderQualityView error:", e); }
+  }
+
   try {
     renderEntryView();
   } catch(e){
     console.error("renderEntryView error:", e);
   }
+}
+
+function scrollToDowntimeGantt(){
+  showTab('dashboard', document.getElementById('tabBtnDashboard'));
+  const el = document.querySelector('.gantt-container');
+  if(el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ============================================================
+   PERFORMANCE VIEW ANALYTICS & SPEED LOSS GANTT
+============================================================ */
+function renderPerformanceView(){
+  const m = computeMetrics();
+
+  const rateEl = document.getElementById('perfDetailRate');
+  if(rateEl) rateEl.textContent = m.performance.toFixed(1) + '%';
+
+  const subEl = document.getElementById('perfDetailSub');
+  const delta = (m.performance - 95.0).toFixed(1);
+  if(subEl) subEl.textContent = `Target: 95.0% · Delta ${delta >= 0 ? '+' : ''}${delta}%`;
+
+  let totalTargetCpm = 0, totalActualCpm = 0;
+  (state.machines || []).forEach(mac => {
+    totalTargetCpm += mac.idealCyclesPerMin || 60;
+    const runSec = Math.max(1, mac.runSec || 1);
+    const actualCpm = (((mac.goodCount || 0) + (mac.rejectCount || 0)) / runSec) * 60;
+    totalActualCpm += isNaN(actualCpm) ? 0 : actualCpm;
+  });
+  const avgLineCpm = (totalActualCpm / (state.machines.length || 1)).toFixed(1);
+
+  const cpmEl = document.getElementById('perfDetailCpm');
+  if(cpmEl) cpmEl.innerHTML = `${avgLineCpm} <span style="font-size:13px;font-weight:500;">CPM</span>`;
+
+  const speedLossUnits = Math.round((1 - (m.performance / 100)) * (m.totalGood + m.totalReject));
+  const speedLossEl = document.getElementById('perfDetailSpeedLoss');
+  if(speedLossEl) speedLossEl.innerHTML = `-${Math.max(0, speedLossUnits)} <span style="font-size:13px;font-weight:500;">PCS</span>`;
+
+  renderSpeedGanttChart();
+  renderSpeedTrendChart();
+  renderSpeedMachinesGrid();
+}
+
+function renderSpeedGanttChart(){
+  const container = document.getElementById('speedGanttTracks');
+  if(!container) return;
+
+  const SHIFT_DURATION = 8 * 3600;
+  let html = '';
+
+  (state.machines || []).forEach(mac => {
+    const stepCount = 24;
+    const stepDur = SHIFT_DURATION / stepCount;
+    const segments = [];
+
+    for(let i=0; i<stepCount; i++){
+      const segStart = SHIFT_START + (i * stepDur);
+      const segEnd = segStart + stepDur;
+
+      if(segStart >= state.clockSec){
+        segments.push({ type:'future', start:segStart, end:segEnd, speedPct:0, label:'Belum Terjadi' });
+        continue;
+      }
+
+      const isBreak = segStart >= (11*3600 + 30*60) && segEnd <= (12*3600 + 15*60);
+      const isDown = (state.events || []).some(e => e.machineId === mac.id && e.start <= segEnd && (e.end || state.clockSec) >= segStart && !e.plannedFlag);
+
+      if(isBreak){
+        segments.push({ type:'planned', start:segStart, end:segEnd, label:'Istirahat (Lunch Break)' });
+      } else if(isDown){
+        segments.push({ type:'downtime', start:segStart, end:segEnd, label:'Breakdown Downtime' });
+      } else {
+        const rnd = ((Math.sin(i * 1.3 + mac.name.length * 3) + 1) / 2);
+        if(rnd < 0.10 && mac.id === 'filler-a'){
+          segments.push({ type:'micro', start:segStart, end:segEnd, speedPct:0, label:'Micro-stop (<2m)' });
+        } else if(rnd < 0.40){
+          const speedPct = Math.round(75 + rnd * 20);
+          segments.push({ type:'degraded', start:segStart, end:segEnd, speedPct:speedPct, label:`Slow Run (${speedPct}%)` });
+        } else {
+          const speedPct = Math.round(96 + rnd * 4);
+          segments.push({ type:'optimal', start:segStart, end:segEnd, speedPct:speedPct, label:`Optimal Speed (${speedPct}%)` });
+        }
+      }
+    }
+
+    html += `
+      <div style="display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:center;">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-hi);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeAttr(mac.name)}">
+          ${escapeHtml(mac.name)}
+        </div>
+        <div style="height:24px;background:var(--bg-1);border-radius:6px;overflow:hidden;border:1px solid var(--steel-line);display:flex;">
+    `;
+
+    segments.forEach(s => {
+      const dur = Math.max(0, s.end - s.start);
+      const pct = (dur / SHIFT_DURATION) * 100;
+      let bg = '#73BF69';
+      if(s.type === 'degraded') bg = '#F2C94C';
+      if(s.type === 'micro') bg = '#FF780A';
+      if(s.type === 'downtime') bg = '#F2495C';
+      if(s.type === 'planned') bg = 'rgba(242,201,76,0.3)';
+      if(s.type === 'future') bg = 'rgba(255,255,255,0.03)';
+
+      const title = `${escapeHtml(mac.name)} (${fmtClock(s.start)}-${fmtClock(s.end)}): ${s.label}`;
+      html += `<div style="width:${pct.toFixed(4)}%;background:${bg};height:100%;border-right:1px solid rgba(0,0,0,0.15);transition:all 0.2s;" title="${escapeAttr(title)}"></div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderSpeedTrendChart(){
+  const svg = document.getElementById('speedTrendSvg');
+  if(!svg) return;
+
+  const width = 800, height = 180;
+  const pts = oeeTrendHistory.length >= 2 ? oeeTrendHistory : [
+    { perf: 92 }, { perf: 88 }, { perf: 95 }, { perf: 91 }
+  ];
+  const stepX = width / (pts.length - 1);
+  const targetY = 30;
+
+  let pathD = "";
+  pts.forEach((pt, i) => {
+    const x = (i * stepX).toFixed(1);
+    const perfVal = pt.perf || 90;
+    const y = (height - (perfVal / 100) * (height - 30)).toFixed(1);
+    pathD += `${i === 0 ? 'M' : 'L'} ${x} ${y} `;
+  });
+
+  const areaD = `${pathD} L ${width} ${height} L 0 ${height} Z`;
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="speedAreaGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--cyan)" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="var(--cyan)" stop-opacity="0.0"/>
+      </linearGradient>
+    </defs>
+    <line x1="0" y1="${targetY}" x2="${width}" y2="${targetY}" stroke="var(--yellow)" stroke-width="1.5" stroke-dasharray="4,4"/>
+    <text x="790" y="${targetY - 5}" fill="var(--yellow)" font-size="9" font-family="var(--mono)" font-weight="600" text-anchor="end">Target Kecepatan Nominal (60 CPM)</text>
+    
+    <path d="${areaD}" fill="url(#speedAreaGrad)" />
+    <path d="${pathD}" fill="none" stroke="var(--cyan)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  `;
+}
+
+function renderSpeedMachinesGrid(){
+  const container = document.getElementById('speedMachinesGrid');
+  if(!container) return;
+
+  container.innerHTML = (state.machines || []).map(mac => {
+    const runSec = Math.max(1, mac.runSec || 1);
+    const actualCpm = (((mac.goodCount || 0) + (mac.rejectCount || 0)) / runSec) * 60;
+    const targetCpm = mac.idealCyclesPerMin || 60;
+    const speedEff = Math.min(100, Math.round((actualCpm / targetCpm) * 100));
+    const lossPcs = Math.round((1 - (speedEff / 100)) * ((mac.goodCount || 0) + (mac.rejectCount || 0)));
+
+    return `
+      <div class="machine-card" style="border-left:4px solid ${speedEff >= 90 ? 'var(--good)' : (speedEff >= 75 ? 'var(--yellow)' : 'var(--bad)')};">
+        <div class="m-head">
+          <div>
+            <div class="m-name">${escapeHtml(mac.name)}</div>
+            <div class="m-line">${escapeHtml(mac.line)}</div>
+          </div>
+          <div class="m-status ${speedEff >= 90 ? 'status-run' : 'status-break'}">${speedEff}% Speed</div>
+        </div>
+        <div style="margin:12px 0;">
+          <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--text-hi);">
+            ${actualCpm.toFixed(1)} <span style="font-size:12px;font-weight:500;color:var(--text-low);">/ ${targetCpm} CPM</span>
+          </div>
+          <div class="factor-bar-track" style="margin-top:6px;"><div class="factor-bar perf" style="width:${speedEff}%;background:${speedEff>=90?'var(--good)':(speedEff>=75?'var(--yellow)':'var(--bad)')};"></div></div>
+        </div>
+        <div class="m-metrics">
+          Est Speed Loss: <b style="color:${lossPcs>0?'var(--warn)':'var(--text-hi)'};">-${lossPcs} pcs</b>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ============================================================
+   QUALITY VIEW ANALYTICS & TIMESTAMP REJECT LOG
+============================================================ */
+function seedDefaultRejectLogs(){
+  if(state.rejectLogs && state.rejectLogs.length > 0) return;
+
+  const defaultLogs = [
+    { id:'rej-101', clockSec: 6*3600 + 42*60 + 15, timestamp: '06:42:15', machineId:'filler-a', machineName:'Filler Unit A', reason:'Volume Underfill (<250ml)', count: 2, qcAction:'Auto-Ejected Bin #1', status:'Defect Auto-Logged' },
+    { id:'rej-102', clockSec: 7*3600 + 15*60 + 22, timestamp: '07:15:22', machineId:'capper', machineName:'Capping Machine', reason:'Cap Misalignment / Miring', count: 1, qcAction:'Auto-Ejected Bin #2', status:'Defect Auto-Logged' },
+    { id:'rej-103', clockSec: 8*3600 + 05*60 + 40, timestamp: '08:05:40', machineId:'labeler', machineName:'Labeler Unit', reason:'Label Crease / Miring', count: 1, qcAction:'Auto-Ejected Bin #3', status:'Defect Auto-Logged' },
+    { id:'rej-104', clockSec: 9*3600 + 12*60 + 10, timestamp: '09:12:10', machineId:'filler-a', machineName:'Filler Unit A', reason:'Seal Ring Leakage Utama', count: 3, qcAction:'Auto-Ejected Bin #1', status:'Defect Auto-Logged' },
+    { id:'rej-105', clockSec: 10*3600 + 34*60 + 05, timestamp: '10:34:05', machineId:'cartoner', machineName:'Cartoner', reason:'Flap Karton Terbuka', count: 2, qcAction:'Quarantine Bin #4', status:'Defect Auto-Logged' },
+  ];
+
+  state.rejectLogs = defaultLogs.filter(l => l.clockSec <= state.clockSec);
+}
+
+function renderQualityView(){
+  seedDefaultRejectLogs();
+  const m = computeMetrics();
+
+  const rateEl = document.getElementById('qualDetailRate');
+  if(rateEl) rateEl.textContent = m.quality.toFixed(1) + '%';
+
+  const fpyEl = document.getElementById('qualDetailFpy');
+  if(fpyEl) fpyEl.textContent = m.quality.toFixed(1) + '%';
+
+  const rejCountEl = document.getElementById('qualDetailRejectCount');
+  if(rejCountEl) rejCountEl.innerHTML = `${m.totalReject} <span style="font-size:13px;font-weight:500;">PCS</span>`;
+
+  const scrapRate = (100 - m.quality).toFixed(2);
+  const scrapEl = document.getElementById('qualDetailScrapRate');
+  if(scrapEl) scrapEl.textContent = `Scrap Rate: ${scrapRate}%`;
+
+  const rejBadge = document.getElementById('rejectBadge');
+  if(rejBadge){
+    if(m.totalReject > 0){
+      rejBadge.style.display = 'inline-block';
+      rejBadge.textContent = m.totalReject;
+    } else {
+      rejBadge.style.display = 'none';
+    }
+  }
+
+  const stationCounts = {};
+  (state.rejectLogs || []).forEach(l => {
+    stationCounts[l.machineName] = (stationCounts[l.machineName] || 0) + l.count;
+  });
+  let topStation = 'Filler Unit A', maxRej = 0;
+  Object.keys(stationCounts).forEach(st => {
+    if(stationCounts[st] > maxRej){ maxRej = stationCounts[st]; topStation = st; }
+  });
+  const topStEl = document.getElementById('qualDetailTopStation');
+  if(topStEl) topStEl.textContent = topStation;
+
+  renderRejectLogTable();
+  renderRejectSpikeChart();
+  renderParetoChart();
+}
+
+function renderRejectLogTable(){
+  const tbody = document.getElementById('rejectLogTbody');
+  if(!tbody) return;
+
+  const search = (document.getElementById('rejectSearchInput')?.value || '').toLowerCase();
+  const filterMac = document.getElementById('rejectMachineFilter')?.value || 'all';
+
+  let logs = state.rejectLogs || [];
+  if(filterMac !== 'all'){
+    logs = logs.filter(l => l.machineId === filterMac);
+  }
+  if(search.trim().length > 0){
+    logs = logs.filter(l =>
+      l.timestamp.toLowerCase().includes(search) ||
+      l.machineName.toLowerCase().includes(search) ||
+      l.reason.toLowerCase().includes(search) ||
+      l.qcAction.toLowerCase().includes(search)
+    );
+  }
+
+  if(logs.length === 0){
+    tbody.innerHTML = `<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--text-low);font-family:var(--mono);">Tidak ada catatan reject terdeteksi yang sesuai filter</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = logs.map(l => `
+    <tr style="border-bottom:1px solid var(--steel-line);transition:background 0.15s ease;" onmouseenter="this.style.background='var(--bg-3)'" onmouseleave="this.style.background='transparent'">
+      <td style="padding:12px 14px;">
+        <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-hi);background:var(--bg-2);padding:4px 8px;border-radius:4px;border:1px solid var(--steel-line);display:inline-flex;align-items:center;gap:4px;">
+          ⏱️ ${escapeHtml(l.timestamp)}
+        </span>
+      </td>
+      <td style="padding:12px 14px;font-weight:600;color:var(--text-hi);">
+        ${escapeHtml(l.machineName)}
+      </td>
+      <td style="padding:12px 14px;">
+        <span style="display:inline-flex;align-items:center;gap:6px;font-weight:500;color:var(--bad);">
+          ⚠️ ${escapeHtml(l.reason)}
+        </span>
+      </td>
+      <td style="padding:12px 14px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--warn);">
+        ${l.count} Pcs
+      </td>
+      <td style="padding:12px 14px;font-family:var(--mono);font-size:11px;color:var(--text-mid);">
+        ${escapeHtml(l.qcAction)}
+      </td>
+      <td style="padding:12px 14px;">
+        <span style="font-family:var(--mono);font-size:9px;font-weight:700;background:rgba(242,73,92,0.15);color:var(--bad);border:1px solid rgba(242,73,92,0.3);padding:3px 8px;border-radius:4px;text-transform:uppercase;">
+          ${escapeHtml(l.status)}
+        </span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderRejectSpikeChart(){
+  const svg = document.getElementById('rejectSpikeSvg');
+  if(!svg) return;
+
+  const logs = state.rejectLogs || [];
+  const hours = [6, 7, 8, 9, 10, 11, 12, 13];
+  const hourlyCounts = hours.map(h => {
+    let cnt = 0;
+    logs.forEach(l => {
+      const logH = parseInt(l.timestamp.split(':')[0], 10);
+      if(logH === h) cnt += l.count;
+    });
+    return cnt;
+  });
+
+  const maxVal = Math.max(5, ...hourlyCounts);
+  const width = 400, height = 150;
+  const barWidth = 28;
+  const gap = (width - (hours.length * barWidth)) / (hours.length + 1);
+
+  let html = `<line x1="0" y1="125" x2="${width}" y2="125" stroke="var(--steel-line)" stroke-width="1"/>`;
+
+  hours.forEach((h, i) => {
+    const cnt = hourlyCounts[i];
+    const x = gap + i * (barWidth + gap);
+    const barH = (cnt / maxVal) * 95;
+    const y = 125 - barH;
+
+    html += `
+      <rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" fill="${cnt>0?'var(--bad)':'var(--steel-line)'}" rx="4" opacity="${cnt>0?'0.85':'0.2'}"/>
+      ${cnt > 0 ? `<text x="${x + barWidth/2}" y="${y - 4}" fill="var(--text-hi)" font-size="9" font-family="var(--mono)" font-weight="700" text-anchor="middle">${cnt}</text>` : ''}
+      <text x="${x + barWidth/2}" y="142" fill="var(--text-low)" font-size="9" font-family="var(--mono)" text-anchor="middle">${String(h).padStart(2,'0')}:00</text>
+    `;
+  });
+
+  svg.innerHTML = html;
+}
+
+function renderParetoChart(){
+  const container = document.getElementById('paretoChartContainer');
+  if(!container) return;
+
+  const logs = state.rejectLogs || [];
+  const reasonCounts = {};
+  let totalRej = 0;
+
+  logs.forEach(l => {
+    reasonCounts[l.reason] = (reasonCounts[l.reason] || 0) + l.count;
+    totalRej += l.count;
+  });
+
+  if(totalRej === 0){
+    container.innerHTML = `<div style="padding:40px 0;text-align:center;color:var(--text-low);font-family:var(--mono);font-size:12px;">Belum ada cacat tercatat shift ini</div>`;
+    return;
+  }
+
+  const sorted = Object.keys(reasonCounts).map(r => ({ reason: r, count: reasonCounts[r] })).sort((a,b) => b.count - a.count);
+
+  container.innerHTML = sorted.map(item => {
+    const pct = ((item.count / totalRej) * 100).toFixed(1);
+    return `
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--text-hi);margin-bottom:4px;">
+          <span>⚠️ ${escapeHtml(item.reason)}</span>
+          <span style="font-family:var(--mono);color:var(--warn);">${item.count} pcs (${pct}%)</span>
+        </div>
+        <div class="factor-bar-track" style="height:8px;"><div class="factor-bar" style="width:${pct}%;background:linear-gradient(90deg, var(--bad), var(--warn));"></div></div>
+      </div>
+    `;
+  }).join('');
 }
 
 function escapeHtml(str){
@@ -1786,6 +2376,7 @@ function resetDemo(){
   state.clockSec = SHIFT_START;
   state.machines = JSON.parse(JSON.stringify(DEFAULT_MACHINES));
   state.events = JSON.parse(JSON.stringify(DEFAULT_PLANNED_BREAKS));
+  state.rejectLogs = [];
   state.activeStop = null;
   state.selectedMachineFilter = null;
   state.form = { category:'mesin', reason: REASON_PRESETS.mesin[0], other:'', isOther:false };
@@ -1852,9 +2443,37 @@ setInterval(() => {
         const cyclesPerSec = m.idealCyclesPerMin/60;
         const speedFactor = 0.85 + rand()*0.12;
         const produced = cyclesPerSec * speedFactor * actualStep;
-        const isReject = rand() < (0.01 * (actualStep > 1 ? 0.5 : 1));
+        const isReject = rand() < (0.015 * (actualStep > 1 ? 0.5 : 1));
         m.runSec += actualStep;
-        if(isReject) m.rejectCount += produced; else m.goodCount += produced;
+        if(isReject){
+          const roundedRej = Math.max(1, Math.round(produced));
+          m.rejectCount += roundedRej;
+
+          const defectsMap = {
+            'filler-a': ['Volume Underfill (<250ml)', 'Seal Ring Leakage Utama', 'Cairan Meluap / Foam Overflow'],
+            'capper': ['Cap Misalignment / Miring', 'Torsi Cap Kurang / Loose Cap', 'Cap Retak / Rusak'],
+            'labeler': ['Label Miring / Crease', 'Barcode Unreadable', 'Perekat Label Lemah'],
+            'cartoner': ['Flap Karton Terbuka', 'Karton Penyok / Damaged', 'Jumlah Botol Dus Kurang']
+          };
+          const list = defectsMap[m.id] || ['Hasil QC di Luar Spesifikasi'];
+          const reason = list[Math.floor(rand() * list.length)];
+          const binNo = m.id==='filler-a' ? '1' : (m.id==='capper' ? '2' : (m.id==='labeler' ? '3' : '4'));
+
+          if(!state.rejectLogs) state.rejectLogs = [];
+          state.rejectLogs.unshift({
+            id: 'rej-' + Date.now() + '-' + Math.floor(rand()*1000),
+            clockSec: state.clockSec,
+            timestamp: fmtClock(state.clockSec),
+            machineId: m.id,
+            machineName: m.name,
+            reason: reason,
+            count: roundedRej,
+            qcAction: 'Auto-Ejected to Bin #' + binNo,
+            status: 'Defect Auto-Logged'
+          });
+        } else {
+          m.goodCount += produced;
+        }
       }
     });
   }

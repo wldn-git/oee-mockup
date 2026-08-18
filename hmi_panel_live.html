@@ -425,6 +425,7 @@
   <div class="hmi-footer">
     <div class="hw-btns">
       <button class="hw-btn" onclick="simulateManualStop()">⏸ SIMULASI STOP</button>
+      <button class="hw-btn" style="border-color:var(--warn);color:var(--warn);" onclick="simulateRejectFromHmi()">⚠️ REJECT QC</button>
       <button class="hw-btn" onclick="resetShift()">↺ RESET SHIFT</button>
     </div>
     <div class="footer-note">SMARTEK — TRAINING · HMI PANEL MOCKUP · FILLER UNIT A · IEC 61131 STYLE REFERENCE</div>
@@ -828,6 +829,39 @@ function triggerEStop(){
   writeSharedState(s);
   render();
 }
+function simulateRejectFromHmi(){
+  const s = readSharedState();
+  const mac = getMyMachine(s);
+  if(!mac) return;
+
+  mac.rejectCount = Math.round((mac.rejectCount || 0) + 1);
+
+  const defectsMap = {
+    'filler-a': 'Volume Underfill (<250ml)',
+    'capper': 'Cap Misalignment / Miring',
+    'labeler': 'Label Crease / Miring',
+    'cartoner': 'Flap Karton Terbuka'
+  };
+  const reason = defectsMap[MACHINE_ID] || 'Pemeriksaan QC Manual Reject';
+  const binNo = MACHINE_ID==='filler-a' ? '1' : (MACHINE_ID==='capper' ? '2' : (MACHINE_ID==='labeler' ? '3' : '4'));
+
+  if(!s.rejectLogs) s.rejectLogs = [];
+  s.rejectLogs.unshift({
+    id: 'rej-hmi-' + Date.now(),
+    clockSec: s.clockSec,
+    timestamp: fmtClock(s.clockSec),
+    machineId: MACHINE_ID,
+    machineName: mac.name,
+    reason: reason,
+    count: 1,
+    qcAction: 'Manual Eject from HMI Bin #' + binNo,
+    status: 'HMI Operator Logged'
+  });
+
+  writeSharedState(s);
+  render();
+}
+
 function resetShift(){
   writeSharedState(standaloneFallback);
   render();
