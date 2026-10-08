@@ -524,24 +524,80 @@
     border-radius: 6px;
   }
 
+  .pillar-desc {
+    font-size: 12px;
+    color: var(--text-mid);
+    line-height: 1.5;
+    margin-bottom: 14px;
+    min-height: 38px;
+  }
   .formula-box {
     background: var(--bg-2);
     border: 1px solid var(--steel-line);
     border-radius: 4px;
-    padding: 14px;
-    margin-bottom: 16px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
     font-family: var(--mono);
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1.5;
+    min-height: 146px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
-  .formula-highlight {
+  .math-display-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 0 8px;
+    white-space: nowrap;
+    overflow-x: auto;
+  }
+  .formula-def-list {
     background: var(--bg-0);
     border-radius: 4px;
-    padding: 8px 12px;
-    margin: 8px 0;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10.5px;
     border-left: 3px solid var(--ember);
+  }
+  .formula-def-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .formula-def-item .def-key {
+    font-weight: 700;
     color: var(--text-hi);
-    font-weight: 600;
+    white-space: nowrap;
+  }
+  .formula-def-item .def-val {
+    color: var(--text-mid);
+  }
+  .pillar-info-card {
+    background: var(--bg-2);
+    border: 1px solid var(--steel-line);
+    border-radius: 5px;
+    padding: 12px;
+    margin-bottom: 14px;
+    font-size: 11px;
+    color: var(--text-mid);
+    line-height: 1.5;
+    min-height: 116px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  .pillar-info-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-hi);
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
   }
 
   .live-sub-box {
@@ -1506,19 +1562,17 @@
       <!-- PILLAR 1: AVAILABILITY -->
       <div class="pillar-card" style="border-top:3px solid var(--warn);">
         <div class="pillar-head">
-          <div class="pillar-title">
-            1. Availability Rate
-          </div>
-          <span class="pillar-badge" style="background:rgba(255,120,10,0.15);color:var(--warn);border:1px solid var(--warn);">KETERSEDIAAN WAKTU</span>
+          <div class="pillar-title">1. Availability Rate</div>
+          <span class="pillar-badge" style="background:rgba(255,185,0,0.15);color:var(--warn);border:1px solid var(--warn);">KETERSEDIAAN WAKTU</span>
         </div>
 
-        <div style="font-size:12px;color:var(--text-mid);line-height:1.6;margin-bottom:14px;">
-          Mengukur rasio waktu operasional bersih (Operating Time) terhadap waktu terencana mesin (Planned Operating Time). Menjawab: <em>"Berapa lama mesin sebenarnya beroperasi saat seharusnya bekerja?"</em>
+        <div class="pillar-desc">
+          Rasio waktu operasional aktual mesin terhadap total waktu yang direncanakan untuk beroperasi setelah dikurangi waktu henti terjadwal.
         </div>
 
         <div class="formula-box">
-          <div style="color:var(--text-low);font-size:10px;font-weight:700;margin-bottom:4px;">RUMUS DASAR:</div>
-          <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 0;">
+          <div style="color:var(--text-low);font-size:10px;font-weight:700;letter-spacing:0.04em;">FORMULA UTAMA:</div>
+          <div class="math-display-row">
             <span style="font-weight:700;color:var(--warn);">Availability</span>
             <span>=</span>
             <div class="math-frac-block">
@@ -1528,16 +1582,28 @@
             <span>× 100%</span>
           </div>
 
-          <div class="formula-highlight" style="border-color:var(--warn);">
-            <div>• <strong>Planned Operating Time (POT)</strong> = Total Jam Shift - Planned Downtime</div>
-            <div style="margin-top:4px;">• <strong>Operating Time (OT)</strong> = POT - Unplanned Downtime</div>
+          <div class="formula-def-list" style="border-left-color:var(--warn);">
+            <div class="formula-def-item">
+              <span class="def-key">POT</span>
+              <span style="color:var(--text-low);">=</span>
+              <span class="def-val">Total Waktu Shift - Planned Downtime</span>
+            </div>
+            <div class="formula-def-item">
+              <span class="def-key">OT</span>
+              <span style="color:var(--text-low);">=</span>
+              <span class="def-val">POT - Unplanned Downtime</span>
+            </div>
           </div>
         </div>
 
-        <div style="background:var(--bg-2);border-radius:5px;padding:12px;margin-bottom:14px;font-size:11px;color:var(--text-mid);line-height:1.5;">
-          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-hi);margin-bottom:4px;">KLASIFIKASI DOWNTIME:</div>
-          <div>• <strong style="color:var(--yellow);">Planned DT</strong>: Istirahat shift (11:30-12:15), CIP sanitasi rutin, preventive maintenance terjadwal. <em>Tidak mengurangi skor Availability!</em></div>
-          <div style="margin-top:4px;">• <strong style="color:var(--bad);">Unplanned DT</strong>: Breakdown mesin, nozzle macet, sensor mati, kehabisan botol. <em>Langsung memotong skor Availability!</em></div>
+        <div class="pillar-info-card">
+          <div class="pillar-info-title">KLASIFIKASI DOWNTIME:</div>
+          <div style="margin-bottom:5px;">
+            <strong style="color:var(--yellow);">• Planned DT:</strong> Istirahat shift (11:30-12:15), sanitasi/CIP rutin, PM terjadwal. <em style="color:var(--text-low);">(Tidak mengurangi skor Availability)</em>
+          </div>
+          <div>
+            <strong style="color:var(--bad);">• Unplanned DT:</strong> Breakdown mesin, nozzle macet, sensor mati, material habis. <em style="color:var(--text-low);">(Memotong langsung skor Availability)</em>
+          </div>
         </div>
 
         <!-- Live Sub Inspector -->
@@ -1561,43 +1627,51 @@
       <!-- PILLAR 2: PERFORMANCE -->
       <div class="pillar-card" style="border-top:3px solid var(--cyan);">
         <div class="pillar-head">
-          <div class="pillar-title">
-            2. Performance Rate
-          </div>
-          <span class="pillar-badge" style="background:rgba(51,181,229,0.15);color:var(--cyan);border:1px solid var(--cyan);">KINERJA &amp; KECEPATAN</span>
+          <div class="pillar-title">2. Performance Rate</div>
+          <span class="pillar-badge" style="background:rgba(96,205,255,0.15);color:var(--cyan);border:1px solid var(--cyan);">KINERJA &amp; KECEPATAN</span>
         </div>
 
-        <div style="font-size:12px;color:var(--text-mid);line-height:1.6;margin-bottom:14px;">
-          Mengukur kecepatan produksi nyata mesin dibandingkan dengan kapasitas desain idealnya. Menjawab: <em>"Seberapa cepat mesin memproduksi barang saat ia sedang running?"</em>
+        <div class="pillar-desc">
+          Rasio jumlah unit riil yang diproduksi mesin terhadap kapasitas output ideal berdasarkan kecepatan desain nominal.
         </div>
 
         <div class="formula-box">
-          <div style="color:var(--text-low);font-size:10px;font-weight:700;margin-bottom:4px;">RUMUS DASAR:</div>
-          <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 0;">
+          <div style="color:var(--text-low);font-size:10px;font-weight:700;letter-spacing:0.04em;">FORMULA UTAMA:</div>
+          <div class="math-display-row">
             <span style="font-weight:700;color:var(--cyan);">Performance</span>
             <span>=</span>
             <div class="math-frac-block">
               <span class="math-frac-num" style="color:var(--cyan);">Total Unit (Good + Reject)</span>
-              <span class="math-frac-den">Target Unit Desain</span>
+              <span class="math-frac-den">Target Output Desain</span>
             </div>
             <span>× 100%</span>
           </div>
 
-          <div class="formula-highlight" style="border-color:var(--cyan);">
-            <div>• <strong>Target Unit Desain</strong> = Kecepatan Ideal (CPM) × Run Time (Menit)</div>
-            <div style="margin-top:4px;">• <strong>Speed Loss (Pcs)</strong> = Target Unit - Total Unit Aktual</div>
+          <div class="formula-def-list" style="border-left-color:var(--cyan);">
+            <div class="formula-def-item">
+              <span class="def-key">Target Unit</span>
+              <span style="color:var(--text-low);">=</span>
+              <span class="def-val">Kecepatan Ideal (CPM) × Run Time (Menit)</span>
+            </div>
+            <div class="formula-def-item">
+              <span class="def-key">Speed Loss</span>
+              <span style="color:var(--text-low);">=</span>
+              <span class="def-val">Target Unit - Total Unit Aktual</span>
+            </div>
           </div>
         </div>
 
-        <div style="background:var(--bg-2);border-radius:5px;padding:12px;margin-bottom:14px;font-size:11px;color:var(--text-mid);line-height:1.5;">
-          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-hi);margin-bottom:4px;">SPESIFIKASI DESAIN LINE 2 (CPM):</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-family:var(--mono);font-size:10px;">
+        <div class="pillar-info-card">
+          <div class="pillar-info-title">SPESIFIKASI DESAIN LINE 2 (CPM):</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-family:var(--mono);font-size:10.5px;margin-bottom:6px;">
             <div>• Filler A: <strong>60 CPM</strong> (1.0s/pcs)</div>
             <div>• Capper: <strong>55 CPM</strong> (1.09s/pcs)</div>
             <div>• Labeler: <strong>58 CPM</strong> (1.03s/pcs)</div>
-            <div>• Cartoner: <strong>40 CPM</strong> (1.5s/pcs)</div>
+            <div>• Cartoner: <strong>40 CPM</strong> (1.50s/pcs)</div>
           </div>
-          <div style="margin-top:6px;font-size:10px;color:var(--text-low);">*Total unit mencakup Good + Reject karena mesin tetap menggunakan daya &amp; waktu untuk memprosesnya.</div>
+          <div style="font-size:10px;color:var(--text-low);">
+            *Total output mencakup Good + Reject (mesin tetap memproses unit reject).
+          </div>
         </div>
 
         <!-- Live Sub Inspector -->
@@ -1620,19 +1694,17 @@
       <!-- PILLAR 3: QUALITY -->
       <div class="pillar-card" style="border-top:3px solid var(--good);">
         <div class="pillar-head">
-          <div class="pillar-title">
-            3. Quality Rate
-          </div>
-          <span class="pillar-badge" style="background:rgba(115,191,105,0.15);color:var(--good);border:1px solid var(--good);">KUALITAS &amp; YIELD</span>
+          <div class="pillar-title">3. Quality Rate</div>
+          <span class="pillar-badge" style="background:rgba(108,203,95,0.15);color:var(--good);border:1px solid var(--good);">KUALITAS &amp; YIELD</span>
         </div>
 
-        <div style="font-size:12px;color:var(--text-mid);line-height:1.6;margin-bottom:14px;">
-          Mengukur persentase produk yang lolos standar mutu (Good) tanpa cacat dari total seluruh produk yang diproduksi. Menjawab: <em>"Berapa banyak barang yang diproduksi benar pada percobaan pertama (First Time Right)?"</em>
+        <div class="pillar-desc">
+          Rasio produk berkualitas baik (memenuhi standar QC) terhadap total seluruh unit produk yang diproses oleh mesin.
         </div>
 
         <div class="formula-box">
-          <div style="color:var(--text-low);font-size:10px;font-weight:700;margin-bottom:4px;">RUMUS DASAR:</div>
-          <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 0;">
+          <div style="color:var(--text-low);font-size:10px;font-weight:700;letter-spacing:0.04em;">FORMULA UTAMA:</div>
+          <div class="math-display-row">
             <span style="font-weight:700;color:var(--good);">Quality</span>
             <span>=</span>
             <div class="math-frac-block">
@@ -1642,17 +1714,27 @@
             <span>× 100%</span>
           </div>
 
-          <div class="formula-highlight" style="border-color:var(--good);">
-            <div>• <strong>Defect / Scrap Rate (%)</strong> = (Reject Count / Total Output) × 100%</div>
-            <div style="margin-top:4px;">• <strong>First Pass Yield (FPY)</strong> = Quality Rate (tanpa pengerjaan ulang)</div>
+          <div class="formula-def-list" style="border-left-color:var(--good);">
+            <div class="formula-def-item">
+              <span class="def-key">Defect Rate</span>
+              <span style="color:var(--text-low);">=</span>
+              <span class="def-val">(Reject Count / Total Output) × 100%</span>
+            </div>
+            <div class="formula-def-item">
+              <span class="def-key">First Pass Yield</span>
+              <span style="color:var(--text-low);">=</span>
+              <span class="def-val">Quality Rate (tanpa pengerjaan ulang)</span>
+            </div>
           </div>
         </div>
 
-        <div style="background:var(--bg-2);border-radius:5px;padding:12px;margin-bottom:14px;font-size:11px;color:var(--text-mid);line-height:1.5;">
-          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-hi);margin-bottom:4px;">KATEGORI REJECT LINE 2:</div>
-          <div>• <strong style="color:var(--bad);">Underfill / Overfill</strong>: Volume isi botol di luar toleransi &plusmn;2ml.</div>
-          <div style="margin-top:3px;">• <strong style="color:var(--bad);">Cap Miring / Bocor</strong>: Seal penutup botol longgar / bocor.</div>
-          <div style="margin-top:3px;">• <strong style="color:var(--bad);">Label Terlipat / Barcode Blur</strong>: Gagal scan barcode kemasan.</div>
+        <div class="pillar-info-card">
+          <div class="pillar-info-title">STANDAR DEFECT LINE 2:</div>
+          <div style="display:flex;flex-direction:column;gap:3px;font-size:10.5px;">
+            <div>• <strong style="color:var(--bad);">Underfill / Overfill:</strong> Volume isi botol di luar toleransi ±2ml.</div>
+            <div>• <strong style="color:var(--bad);">Cap Miring / Bocor:</strong> Seal penutup botol longgar / induction rusak.</div>
+            <div>• <strong style="color:var(--bad);">Label Cacat / Blur:</strong> Gagal pembacaan barcode oleh scanner QC.</div>
+          </div>
         </div>
 
         <!-- Live Sub Inspector -->
