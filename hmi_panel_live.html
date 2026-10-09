@@ -563,7 +563,15 @@ if(bc){
 
 function writeSharedState(next){
   try{
-    const payload = { ...next, savedAt: Date.now() };
+    const raw = localStorage.getItem(SYNC_KEY);
+    let latestClock = next.clockSec;
+    if(raw){
+      const cur = JSON.parse(raw);
+      if(cur && typeof cur.clockSec === 'number' && cur.clockSec > latestClock){
+        latestClock = cur.clockSec;
+      }
+    }
+    const payload = { ...next, clockSec: latestClock, savedAt: Date.now() };
     localStorage.setItem(SYNC_KEY, JSON.stringify(payload));
     if(bc) bc.postMessage({ type: 'sync', state: payload });
   }catch(e){}
@@ -713,6 +721,12 @@ function renderActionZone(s, mac, myActiveStop){
   const isSnoozed = myActiveStop && myActiveStop.snoozedUntil && s.clockSec < myActiveStop.snoozedUntil;
 
   if(myActiveStop && !isSnoozed){
+    const autoClock = myActiveStop.autoResolveClock || (myActiveStop.startClock + 25);
+    if(s.clockSec >= autoClock){
+      autoResolveHmiStop(s, myActiveStop, mac);
+      return;
+    }
+
     idle.style.display='none';
     const elapsed = s.clockSec - myActiveStop.startClock;
     const currentKey = `${myActiveStop.startClock}_${uiState.form.category}_${uiState.form.isOther}_${uiState.form.reason}`;
@@ -732,6 +746,11 @@ function renderActionZone(s, mac, myActiveStop){
         // Smart update only the timer text so input field doesn't lose focus
         const timerEl = existingPopup.querySelector('.popup-timer');
         if(timerEl) timerEl.textContent = fmtClock(elapsed);
+        const autoCountdownEl = existingPopup.querySelector('.auto-recovery-rem');
+        if(autoCountdownEl){
+          const remSec = Math.max(0, Math.floor(autoClock - s.clockSec));
+          autoCountdownEl.textContent = '⏱️ ' + remSec + 's';
+        }
       }
     }
   } else {
@@ -758,6 +777,8 @@ function renderPopup(s, mac, activeStop){
   const elapsed = s.clockSec - activeStop.startClock;
   const reasons = REASON_PRESETS[uiState.form.category] || [];
   const canSubmit = uiState.form.isOther ? uiState.form.other.trim().length>0 : !!uiState.form.reason;
+  const autoClock = activeStop.autoResolveClock || (activeStop.startClock + 25);
+  const remSec = Math.max(0, Math.floor(autoClock - s.clockSec));
 
   return `
     <div class="popup">
@@ -768,6 +789,19 @@ function renderPopup(s, mac, activeStop){
         </div>
         <div class="popup-title">${activeStop.isEStop ? '🚨 EMERGENCY STOP (E-STOP)' : 'Kenapa mesin berhenti?'}</div>
         <div class="popup-sub">${escapeHtml(mac.name)} · Terhenti pukul <b>${fmtClock(activeStop.startClock)}</b></div>
+      </div>
+      <div style="margin:12px 20px 0 20px;padding:10px 14px;background:rgba(87,148,242,0.1);border:1px solid rgba(87,148,242,0.3);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">🤖</span>
+          <div>
+            <div style="font-weight:700;font-size:11px;color:var(--ember,#5794F2);letter-spacing:0.04em;">AUTO-RECOVERY AKTIF</div>
+            <div style="font-size:10px;color:var(--text-mid,#94a3b8);margin-top:2px;">Jika tanpa judgment manual, sistem otomatis memilih alasan &amp; mesin start kembali.</div>
+          </div>
+        </div>
+        <div style="text-align:right;flex:none;display:flex;align-items:center;gap:8px;">
+          <span class="auto-recovery-rem" style="background:rgba(87,148,242,0.2);color:#fff;border:1px solid rgba(87,148,242,0.4);padding:3px 8px;border-radius:4px;font-family:monospace;font-size:11px;font-weight:700;">⏱️ ${remSec}s</span>
+          <button onclick="triggerAutoResolveFromHmi()" style="background:var(--ember,#5794F2);color:#fff;border:none;border-radius:4px;padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;" title="Langsung hidupkan mesin dengan alasan otomatis">⚡ Auto-Start</button>
+        </div>
       </div>
       <div class="popup-body">
         <div class="p-field-label">Kategori Downtime <span class="p-req">*wajib</span></div>
@@ -796,7 +830,7 @@ function renderPopup(s, mac, activeStop){
       </div>
       <div class="popup-footer">
         <button class="p-btn p-btn-secondary" onclick="snoozeDowntime()">Tunda 5 Menit</button>
-        <button class="p-btn p-btn-primary" ${canSubmit?'':'disabled'} onclick="submitDowntime()">Konfirmasi &amp; Lanjut Produksi</button>
+        <button class="p-btn p-btn-primary" ${canSubmit?'':'disabled'} onclick="submitDowntime()">Konfirmasi &amp; Lanjut Produksi (Manual)</button>
       </div>
     </div>`;
 }
@@ -830,6 +864,61 @@ function updateOtherText(v){
   const btn=document.querySelector('.p-btn-primary');
   if(btn){ const can=v.trim().length>0; btn.disabled=!can; }
 }
+
+function triggerAutoResolveFromHmi(){
+  const s = readSharedState();
+  const mac = getMyMachine(s);
+  const activeStop = getMyActiveStop(s);
+  if(activeStop) autoResolveHmiStop(s, activeStop, mac);
+}
+
+function autoResolveHmiStop(s, activeStop, mac){
+  if(!activeStop) return;
+  const catPool = ['mesin', 'mesin', 'mesin', 'material', 'quality', 'planned'];
+  const catId = catPool[Math.floor(Math.random() * catPool.length)];
+  const cat = CATEGORIES.find(c => c.id === catId) || CATEGORIES[0];
+
+  const defectsMap = {
+    'filler-a': ['Nozzle filler tersumbat', 'Sensor level cairan error', 'Kebocoran seal / valve', 'Tekanan pompa filling drop'],
+    'capper': ['Cap feeder macet / jamming', 'Torsi capper di luar batas toleransi', 'Sensor deteksi tutup error', 'Gripper cap aus'],
+    'labeler': ['Sensor optical label error', 'Conveyor macet / botol miring', 'Roll label putus / habis', 'Aplikator label tersangkut'],
+    'cartoner': ['Flap karton macet', 'Suction cup vakum lemah', 'Pendorong karton error', 'Stok karton kosong']
+  };
+
+  let reasonText = '';
+  if(catId === 'mesin' && defectsMap[mac.id]){
+    const list = defectsMap[mac.id];
+    reasonText = list[Math.floor(Math.random() * list.length)];
+  } else {
+    const reasons = REASON_PRESETS[catId] || REASON_PRESETS.mesin;
+    reasonText = reasons[Math.floor(Math.random() * reasons.length)];
+  }
+
+  const newEvent = {
+    id: 'evt-' + Date.now(),
+    machineId: mac.id,
+    machineName: mac.name,
+    categoryId: cat.id,
+    categoryLabel: cat.label.replace('\\n', ' '),
+    categoryIcon: cat.icon,
+    plannedFlag: cat.planned,
+    reason: reasonText + ' (Auto-Resolved)',
+    isOther: false,
+    start: activeStop.startClock,
+    end: Math.max(activeStop.startClock + 1, s.clockSec),
+    status: 'approved',
+    operator: 'Auto-Recovery (HMI Standby)',
+  };
+
+  s.events.unshift(newEvent);
+  mac.status = 'run';
+  if(s.activeStop && s.activeStop.machineId === mac.id) s.activeStop = null;
+
+  writeSharedState(s);
+  uiState.form = { category:'mesin', reason:REASON_PRESETS.mesin[0], other:'', isOther:false };
+  render();
+}
+
 function submitDowntime(){
   const s = readSharedState();
   const mac = getMyMachine(s);
@@ -859,7 +948,8 @@ function submitDowntime(){
 function snoozeDowntime(){
   const s = readSharedState();
   if(s.activeStop && s.activeStop.machineId===MACHINE_ID){
-    s.activeStop.snoozedUntil = s.clockSec+5;
+    s.activeStop.snoozedUntil = s.clockSec+300;
+    s.activeStop.autoResolveClock = s.clockSec+300;
     writeSharedState(s);
   }
   render();
@@ -869,7 +959,7 @@ function simulateManualStop(){
   const mac = getMyMachine(s);
   if(s.activeStop) return; // one active stop across the whole line at a time (matches dashboard logic)
   mac.status = 'down';
-  s.activeStop = { machineId: MACHINE_ID, machineName: mac.name, startClock: s.clockSec };
+  s.activeStop = { machineId: MACHINE_ID, machineName: mac.name, startClock: s.clockSec, autoResolveClock: s.clockSec + 25 };
   writeSharedState(s);
   uiState.form = { category:'mesin', reason:REASON_PRESETS.mesin[0], other:'', isOther:false };
   render();
@@ -980,6 +1070,13 @@ setInterval(()=>{
 }, 1000);
 
 render();
+
+// Synchronize instantly when switching back to this window
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') render();
+});
+window.addEventListener('focus', render);
+window.addEventListener('pageshow', render);
 </script>
 </body>
 </html>

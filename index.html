@@ -911,6 +911,20 @@
       <button onclick="togglePauseSim()" class="speed-btn" id="spdBtnPause" style="width:100%;padding:10px;font-size:12px;font-weight:700;border:1px solid var(--steel-line);background:var(--bg-1);">⏸ Pause Simulasi</button>
     </div>
 
+    <!-- SECTION 1B: AUTO-RECOVERY SETTING -->
+    <div class="sidebar-section-card">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+        <span>Auto-Recovery Mesin</span>
+        <span id="autoRecoveryStatusTag" style="font-size:9px;background:rgba(16,185,129,0.15);color:var(--good);border:1px solid rgba(16,185,129,0.3);padding:2px 6px;border-radius:4px;font-weight:700;">AKTIF</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-mid);margin-bottom:8px;line-height:1.4;">
+        Jika mesin berhenti &amp; tanpa input manual, sistem otomatis memilih alasan acak &amp; mesin kembali running.
+      </div>
+      <button onclick="toggleAutoRecovery()" id="btnAutoRecoveryToggle" class="speed-btn active" style="width:100%;padding:9px;font-size:11px;font-weight:700;border:1px solid var(--good);background:rgba(16,185,129,0.15);color:var(--good);">
+        ✓ Auto-Recovery: AKTIF (Auto Start)
+      </button>
+    </div>
+
     <!-- SECTION 2: AUDIT LOG -->
     <div class="sidebar-section-card">
       <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-low);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">
@@ -2133,6 +2147,16 @@ let lastPushTime = 0;
 
 function pushStateToStorage(){
   try{
+    // Prevent regressing clockSec if another active tab already moved further ahead
+    const raw = localStorage.getItem(SYNC_KEY);
+    if(raw){
+      const ext = JSON.parse(raw);
+      if(ext && typeof ext.clockSec === 'number' && ext.clockSec > state.clockSec){
+        state.clockSec = ext.clockSec;
+        if(typeof lastSimTickTimestamp !== 'undefined') lastSimTickTimestamp = performance.now();
+      }
+    }
+
     lastPushTime = Date.now();
     const payload = {
       clockSec: state.clockSec,
@@ -2158,6 +2182,13 @@ function pullExternalUpdates(){
     if(ext.savedAt && lastPushTime && Math.abs(ext.savedAt - lastPushTime) < 50) return;
 
     let changed = false;
+
+    // Adopt external clockSec if further ahead (e.g. from leader tab)
+    if(typeof ext.clockSec === 'number' && ext.clockSec > state.clockSec){
+      state.clockSec = ext.clockSec;
+      if(typeof lastSimTickTimestamp !== 'undefined') lastSimTickTimestamp = performance.now();
+      changed = true;
+    }
     const knownIds = new Set(state.events.map(e=>e.id));
     ext.events.forEach(e=>{
       if(!knownIds.has(e.id)){
@@ -2846,9 +2877,15 @@ function render(){
     grid.innerHTML = state.machines.map(mac => {
       const mm = computeMachineMetrics(mac);
       const isDown = mac.status === 'down';
+      const isMyActive = state.activeStop && state.activeStop.machineId === mac.id;
+      let autoRecNote = '';
+      if(isDown && isMyActive && autoRecoveryEnabled && state.activeStop.autoResolveClock){
+        const remSec = Math.max(0, Math.floor(state.activeStop.autoResolveClock - state.clockSec));
+        autoRecNote = `<span style="font-family:var(--mono);font-size:9px;color:var(--ember);background:rgba(87,148,242,0.15);border:1px solid rgba(87,148,242,0.3);padding:1px 5px;border-radius:3px;margin-left:5px;font-weight:700;">⚡ Auto-start ${remSec}s</span>`;
+      }
       const stClass = isShiftEnded ? 'status-down' : (isBreakTime ? 'status-break' : (isDown ? 'status-down' : 'status-run'));
       const stBorderColor = isShiftEnded ? 'var(--steel-line)' : (isBreakTime ? 'var(--yellow)' : (isDown ? 'var(--bad)' : 'var(--good)'));
-      const stLabel = isShiftEnded ? 'Shift Selesai' : (isBreakTime ? 'Planned Break' : (isDown ? 'Stopped' : 'Running'));
+      const stLabel = isShiftEnded ? 'Shift Selesai' : (isBreakTime ? 'Planned Break' : (isDown ? `Stopped ${autoRecNote}` : 'Running'));
       const oeeEst = (isDown && !isShiftEnded) ? '—' : mm.oee.toFixed(0) + '%';
       return `
         <div class="machine-card" style="border-left:4px solid ${stBorderColor};">
@@ -2861,7 +2898,7 @@ function render(){
             <div class="m-oee-label">OEE Mesin (A:${mm.availability.toFixed(0)}% P:${mm.performance.toFixed(0)}% Q:${mm.quality.toFixed(0)}%)</div>
           </div>
           <div class="m-metrics" style="cursor:pointer;" onclick="openMachineDrilldown('${mac.id}')">
-            ${isBreakTime ? `Istirahat Shift B (11:30 - 12:15)` : (isDown && !isShiftEnded ? `Mesin Berhenti — Insiden Aktif` : `Good <b>${Math.round(mac.goodCount || 0)}</b> · Reject <b>${Math.round(mac.rejectCount || 0)}</b>`)}
+            ${isBreakTime ? `Istirahat Shift B (11:30 - 12:15)` : (isDown && !isShiftEnded ? `Mesin Berhenti — Insiden Aktif ${autoRecNote ? '· Standby Auto-Judgment' : ''}` : `Good <b>${Math.round(mac.goodCount || 0)}</b> · Reject <b>${Math.round(mac.rejectCount || 0)}</b>`)}
           </div>
           ${mm.totalDownMin > 0 ? `<div style="font-family:var(--mono);font-size:10px;color:var(--text-low);margin-top:8px;cursor:pointer;" onclick="openMachineDrilldown('${mac.id}')">Total downtime shift: ${mm.totalDownMin} min (${fmtHM(mm.plannedSec)} planned · ${fmtHM(mm.unplannedSec)} unplanned)</div>` : ''}
           <button onclick="event.stopPropagation();openHmiPanel('${mac.id}')" style="width:100%;margin-top:14px;padding:9px;background:var(--bg-2);border:1px solid var(--steel-line);border-radius:5px;color:var(--ember);font-family:var(--mono);font-size:11px;font-weight:800;cursor:pointer;">Buka HMI Mesin →</button>
@@ -3334,7 +3371,7 @@ function triggerManualStopFromDashboard(machineId){
   const mac = state.machines.find(m=>m.id===machineId);
   if(!mac) return;
   mac.status = 'down';
-  state.activeStop = { machineId: mac.id, machineName: mac.name, startClock: state.clockSec };
+  state.activeStop = { machineId: mac.id, machineName: mac.name, startClock: Math.floor(state.clockSec), autoResolveClock: Math.floor(state.clockSec) + getAutoRecoveryDuration() };
   state.form = { category:'mesin', reason: REASON_PRESETS.mesin[0], other:'', isOther:false };
   pushStateToStorage();
   render();
@@ -4196,8 +4233,15 @@ function updateAuditBadgeCount(){
   window.addEventListener('DOMContentLoaded', () => updateThemeButtonText(saved));
 })();
 
+let simSpeed = 1;
+let isSimPaused = false;
+let lastSimTickTimestamp = performance.now();
+let accumulatedBreakdownSimSec = 0;
+
 function resetDemo(){
   try{ localStorage.removeItem(SYNC_KEY); }catch(e){}
+  lastSimTickTimestamp = performance.now();
+  accumulatedBreakdownSimSec = 0;
   state.clockSec = SHIFT_START;
   state.machines = JSON.parse(JSON.stringify(DEFAULT_MACHINES));
   state.events = JSON.parse(JSON.stringify(DEFAULT_PLANNED_BREAKS));
@@ -4209,9 +4253,6 @@ function resetDemo(){
   pushStateToStorage();
   render();
 }
-
-let simSpeed = 1;
-let isSimPaused = false;
 
 function toggleDemoSidebar(show){
   const sidebar = document.getElementById('demoControlSidebar');
@@ -4228,12 +4269,14 @@ function toggleDemoSidebar(show){
 }
 
 function setSimSpeed(speed){
+  lastSimTickTimestamp = performance.now();
   simSpeed = speed;
   isSimPaused = false;
   updateSpeedUI();
 }
 
 function togglePauseSim(){
+  lastSimTickTimestamp = performance.now();
   isSimPaused = !isSimPaused;
   updateSpeedUI();
 }
@@ -4253,9 +4296,101 @@ function updateSpeedUI(){
 }
 
 /* ============================================================
-   SIMULATION TICKS (dashboard = leader; also syncs to/from HMI tabs)
+   AUTO-RECOVERY (AUTO-JUDGMENT & AUTOMATIC RESTART)
+   - If a machine stops and no manual override occurs on HMI / Dashboard,
+     the system automatically picks a stop reason randomly and resumes running!
 ============================================================ */
-setInterval(() => {
+let autoRecoveryEnabled = true;
+
+function getAutoRecoveryDuration(){
+  if(simSpeed === 1) return 25;   // 25s simulation = 25s real
+  if(simSpeed <= 10) return 60;  // 60s simulation = 6s real
+  if(simSpeed <= 60) return 180; // 180s simulation = 3s real
+  return 300;                    // 300s simulation = 1s real
+}
+
+function toggleAutoRecovery(){
+  autoRecoveryEnabled = !autoRecoveryEnabled;
+  updateAutoRecoveryUI();
+}
+
+function updateAutoRecoveryUI(){
+  const btn = document.getElementById('btnAutoRecoveryToggle');
+  const tag = document.getElementById('autoRecoveryStatusTag');
+  if(btn){
+    btn.innerHTML = autoRecoveryEnabled ? '✓ Auto-Recovery: AKTIF (Auto Start)' : '✕ Auto-Recovery: NONAKTIF (Manual Only)';
+    btn.style.borderColor = autoRecoveryEnabled ? 'var(--good)' : 'var(--steel-line)';
+    btn.style.background = autoRecoveryEnabled ? 'rgba(16,185,129,0.15)' : 'var(--bg-1)';
+    btn.style.color = autoRecoveryEnabled ? 'var(--good)' : 'var(--text-low)';
+  }
+  if(tag){
+    tag.textContent = autoRecoveryEnabled ? 'AKTIF' : 'NONAKTIF';
+    tag.style.color = autoRecoveryEnabled ? 'var(--good)' : 'var(--text-low)';
+    tag.style.borderColor = autoRecoveryEnabled ? 'rgba(16,185,129,0.3)' : 'var(--steel-line)';
+    tag.style.background = autoRecoveryEnabled ? 'rgba(16,185,129,0.15)' : 'transparent';
+  }
+}
+
+function triggerAutoResolveActiveStop(){
+  if(!state.activeStop) return;
+  const stop = state.activeStop;
+
+  const catPool = ['mesin', 'mesin', 'mesin', 'material', 'material', 'quality', 'planned'];
+  const catId = catPool[Math.floor(rand() * catPool.length)];
+  const cat = CATEGORIES.find(c => c.id === catId) || CATEGORIES[0];
+
+  const defectsMap = {
+    'filler-a': ['Nozzle filler tersumbat', 'Sensor level cairan error', 'Kebocoran seal / valve', 'Tekanan pompa filling drop'],
+    'capper': ['Cap feeder macet / jamming', 'Torsi capper di luar batas toleransi', 'Sensor deteksi tutup error', 'Gripper cap aus'],
+    'labeler': ['Sensor optical label error', 'Conveyor macet / botol miring', 'Roll label putus / habis', 'Aplikator label tersangkut'],
+    'cartoner': ['Flap karton macet', 'Suction cup vakum lemah', 'Pendorong karton error', 'Stok karton kosong']
+  };
+
+  let reasonText = '';
+  if(catId === 'mesin' && defectsMap[stop.machineId]){
+    const list = defectsMap[stop.machineId];
+    reasonText = list[Math.floor(rand() * list.length)];
+  } else {
+    const reasons = REASON_PRESETS[catId] || REASON_PRESETS.mesin;
+    reasonText = reasons[Math.floor(rand() * reasons.length)];
+  }
+
+  const newEvent = {
+    id: 'evt-' + Date.now() + '-' + Math.floor(rand() * 1000),
+    machineId: stop.machineId,
+    machineName: stop.machineName,
+    categoryId: cat.id,
+    categoryLabel: cat.label,
+    categoryIcon: cat.icon,
+    plannedFlag: cat.planned,
+    reason: reasonText + ' (Auto-Resolved)',
+    isOther: false,
+    start: stop.startClock,
+    end: Math.max(stop.startClock + 1, Math.floor(state.clockSec)),
+    status: 'approved',
+    operator: 'Auto-Recovery (Sistem Standby)',
+  };
+
+  state.events.unshift(newEvent);
+  const mac = state.machines.find(m => m.id === stop.machineId);
+  if(mac) mac.status = 'run';
+  state.activeStop = null;
+  state.form = { category: 'mesin', reason: REASON_PRESETS.mesin[0], other: '', isOther: false };
+  pushStateToStorage();
+  render();
+}
+
+/* ============================================================
+   SIMULATION TICKS (HIGH-PRECISION DELTA TIMING + WEB WORKER)
+   - Real-world elapsed time measured via performance.now() (Zero drift at 1x)
+   - Inline Web Worker prevents browser 60s timer throttling when window is in background
+   - visibilitychange / focus listeners catch up time immediately upon returning to window
+============================================================ */
+function simulationTick(){
+  const now = performance.now();
+  const deltaRealSec = Math.max(0, (now - lastSimTickTimestamp) / 1000);
+  lastSimTickTimestamp = now;
+
   if(isSimPaused) return;
 
   const SHIFT_END = SHIFT_START + (8 * 3600);
@@ -4267,10 +4402,13 @@ setInterval(() => {
     return;
   }
 
-  const step = simSpeed;
-  const nextClock = state.clockSec + step;
+  // Calculate actual step based on real elapsed time * simSpeed
+  // At 1x speed: exactly 1.0 real second = 1.0 simulation second!
+  const step = deltaRealSec * simSpeed;
+  if(step <= 0) return;
+
   const actualStep = Math.min(step, SHIFT_END - state.clockSec);
-  state.clockSec = Math.min(SHIFT_END, nextClock);
+  state.clockSec = Math.min(SHIFT_END, state.clockSec + actualStep);
   const isShiftEnded = state.clockSec >= SHIFT_END;
 
   // Check if current time is within planned lunch break (11:30 - 12:15)
@@ -4279,13 +4417,16 @@ setInterval(() => {
   if(!isShiftEnded && !isBreakTime && actualStep > 0){
     state.machines.forEach(m => {
       if(m.status==='run'){
-        const cyclesPerSec = m.idealCyclesPerMin/60;
-        const speedFactor = 0.85 + rand()*0.12;
+        const cyclesPerSec = m.idealCyclesPerMin / 60;
+        const speedFactor = 0.85 + rand() * 0.12;
         const produced = cyclesPerSec * speedFactor * actualStep;
-        const isReject = rand() < (0.015 * (actualStep > 1 ? 0.5 : 1));
+
+        // Scaled defect probability based on actualStep
+        const stepRejProb = 1 - Math.pow(1 - 0.015, Math.min(10, actualStep));
+        const isReject = rand() < stepRejProb;
         m.runSec += actualStep;
         if(isReject){
-          const roundedRej = Math.max(1, Math.round(produced));
+          const roundedRej = Math.max(1, Math.round(actualStep > 2 ? produced * 0.03 : produced));
           m.rejectCount += roundedRej;
 
           const defectsMap = {
@@ -4301,7 +4442,7 @@ setInterval(() => {
           if(!state.rejectLogs) state.rejectLogs = [];
           state.rejectLogs.unshift({
             id: 'rej-' + Date.now() + '-' + Math.floor(rand()*1000),
-            clockSec: state.clockSec,
+            clockSec: Math.floor(state.clockSec),
             timestamp: fmtClock(state.clockSec),
             machineId: m.id,
             machineName: m.name,
@@ -4317,31 +4458,95 @@ setInterval(() => {
     });
   }
 
+  // Realistic Breakdown Check: evaluated per ~15-20 simulated minutes of production
+  accumulatedBreakdownSimSec += actualStep;
+  if(accumulatedBreakdownSimSec >= 900){
+    accumulatedBreakdownSimSec = 0;
+    if(!isSimPaused && !state.activeStop && state.clockSec < SHIFT_END && !isBreakTime){
+      const runningMachines = state.machines.filter(m=>m.status==='run');
+      if(runningMachines.length > 0 && rand() < 0.35){
+        const target = runningMachines[Math.floor(rand()*runningMachines.length)];
+        target.status = 'down';
+        state.activeStop = {
+          machineId: target.id,
+          machineName: target.name,
+          startClock: Math.floor(state.clockSec),
+          autoResolveClock: Math.floor(state.clockSec) + getAutoRecoveryDuration()
+        };
+        state.form = { category:'mesin', reason: REASON_PRESETS.mesin[0], other:'', isOther:false };
+      }
+    }
+  }
+
+  // Auto-Recovery Check: if machine is stopped and no manual override occurred, auto-pick reason and restart!
+  if(state.activeStop && autoRecoveryEnabled){
+    const isSnoozed = state.activeStop.snoozedUntil && state.clockSec < state.activeStop.snoozedUntil;
+    if(!isSnoozed){
+      if(!state.activeStop.autoResolveClock){
+        state.activeStop.autoResolveClock = state.activeStop.startClock + getAutoRecoveryDuration();
+      }
+      if(state.clockSec >= state.activeStop.autoResolveClock){
+        triggerAutoResolveActiveStop();
+      }
+    }
+  }
+
   pushStateToStorage();
   render();
-}, 1000);
+}
 
-setInterval(() => {
-  const SHIFT_END = SHIFT_START + (8 * 3600);
-  const isBreakTime = state.clockSec >= (11*3600 + 30*60) && state.clockSec < (12*3600 + 15*60);
-
-  // DO NOT trigger breakdown incidents during pause, active stop, shift end, OR LUNCH BREAK!
-  if(isSimPaused || state.activeStop || state.clockSec >= SHIFT_END || isBreakTime) return;
-
-  const runningMachines = state.machines.filter(m=>m.status==='run');
-  if(runningMachines.length===0) return;
-
-  // Incident trigger probability scales with sim speed
-  const chance = 0.35 * (simSpeed > 60 ? 0.3 : (simSpeed > 10 ? 0.6 : 1));
-  if(rand() < chance){
-    const target = runningMachines[Math.floor(rand()*runningMachines.length)];
-    target.status = 'down';
-    state.activeStop = { machineId: target.id, machineName: target.name, startClock: state.clockSec };
-    state.form = { category:'mesin', reason: REASON_PRESETS.mesin[0], other:'', isOther:false };
-    pushStateToStorage();
-    render();
+// Background Web Worker to ensure ticks continue reliably even if tab/window is in background
+(function initSimulationWorker(){
+  try {
+    const blobCode = `
+      let timer = null;
+      self.onmessage = function(e){
+        if(e.data === 'start'){
+          if(timer) clearInterval(timer);
+          timer = setInterval(function(){ self.postMessage('tick'); }, 1000);
+        } else if(e.data === 'stop'){
+          if(timer) clearInterval(timer);
+          timer = null;
+        }
+      };
+    `;
+    const workerBlob = new Blob([blobCode], { type: 'application/javascript' });
+    const simWorker = new Worker(URL.createObjectURL(workerBlob));
+    simWorker.onmessage = function(e){
+      if(e.data === 'tick') simulationTick();
+    };
+    simWorker.postMessage('start');
+  } catch(e) {
+    // Fallback standard timer if Web Workers are blocked
+    setInterval(simulationTick, 1000);
   }
-}, 25000);
+
+  // Backup fallback on window: guarantees ticking if worker was paused by OS deep sleep
+  setInterval(() => {
+    const now = performance.now();
+    if(now - lastSimTickTimestamp >= 950){
+      simulationTick();
+    }
+  }, 1000);
+})();
+
+// Window Focus & Visibility Handlers: Immediately synchronize clock when switching windows/tabs
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible'){
+    pullExternalUpdates();
+    simulationTick();
+  } else {
+    pushStateToStorage();
+  }
+});
+window.addEventListener('focus', () => {
+  pullExternalUpdates();
+  simulationTick();
+});
+window.addEventListener('pageshow', () => {
+  pullExternalUpdates();
+  simulationTick();
+});
 
 // initial load: adopt any existing shared state so dashboard doesn't reset
 // numbers if an HMI tab was opened and already running first
@@ -4378,6 +4583,9 @@ setInterval(() => {
   if(!state.machines || !Array.isArray(state.machines) || state.machines.length === 0){
     state.machines = JSON.parse(JSON.stringify(DEFAULT_MACHINES));
   }
+  lastSimTickTimestamp = performance.now();
+  updateSpeedUI();
+  updateAutoRecoveryUI();
   pushStateToStorage();
   try { calculateSandboxOee(); } catch(e){}
   render();
