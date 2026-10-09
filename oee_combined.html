@@ -25,6 +25,7 @@
     --warn:#FFB900;
     --bad:#F87171;
     --cyan:#60CDFF;
+    --purple:#B4A0FF;
     --yellow:#FCE100;
     --text-hi:#FFFFFF;
     --text-mid:#D1D1D1;
@@ -46,6 +47,7 @@
     --warn:#D83B01;
     --bad:#C42B1C;
     --cyan:#0078D4;
+    --purple:#7C3AED;
     --yellow:#CA5010;
     --text-hi:#1B1B1B;
     --text-mid:#5C5C5C;
@@ -1127,7 +1129,7 @@
             OEE Live &amp; Performa Shift Trend
             <span class="live-dot"></span>
           </div>
-          <div class="panel-meta" id="trendMeta" style="margin-top:4px;">Line 2 · Shift B · Respon Realtime Live</div>
+          <div class="panel-meta" id="trendMeta" style="margin-top:4px;">Line 2 · Shift B (06:00 — 14:00) · <span id="trendLiveTimeBadge" style="color:var(--ember);font-weight:600;">Live: 06:00:00</span></div>
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <div class="trend-kpi-badge">
@@ -1156,7 +1158,7 @@
           <span>0%</span>
         </div>
 
-        <!-- MAIN SVG CHART WRAP -->
+        <!-- MAIN SVG CHART WRAP (FULL SHIFT TIMELINE 06:00 TO 14:00) -->
         <div class="trend-svg-wrap" style="position:relative;margin-left:45px;height:200px;">
           <svg id="oeeTrendChart" viewBox="0 0 800 200" preserveAspectRatio="none" style="width:100%;height:100%;background:var(--bg-2);border-radius:5px;border:1px solid var(--steel-line);cursor:crosshair;">
             <defs>
@@ -1174,6 +1176,18 @@
             <line x1="0" y1="160" x2="800" y2="160" stroke="var(--steel-line)" stroke-dasharray="3,3" opacity="0.6" />
             <line x1="0" y1="200" x2="800" y2="200" stroke="var(--steel-line)" stroke-width="1" />
 
+            <!-- VERTICAL TIME GRID LINES (2-HOUR & 1-HOUR INTERVALS FOR SHIFT B: 06:00 - 14:00) -->
+            <line x1="100" y1="0" x2="100" y2="200" stroke="var(--steel-line)" stroke-dasharray="2,4" opacity="0.25" />
+            <line x1="200" y1="0" x2="200" y2="200" stroke="var(--steel-line)" stroke-dasharray="3,3" opacity="0.55" />
+            <line x1="300" y1="0" x2="300" y2="200" stroke="var(--steel-line)" stroke-dasharray="2,4" opacity="0.25" />
+            <line x1="400" y1="0" x2="400" y2="200" stroke="var(--steel-line)" stroke-dasharray="3,3" opacity="0.55" />
+            <line x1="500" y1="0" x2="500" y2="200" stroke="var(--steel-line)" stroke-dasharray="2,4" opacity="0.25" />
+            <line x1="600" y1="0" x2="600" y2="200" stroke="var(--steel-line)" stroke-dasharray="3,3" opacity="0.55" />
+            <line x1="700" y1="0" x2="700" y2="200" stroke="var(--steel-line)" stroke-dasharray="2,4" opacity="0.25" />
+
+            <!-- FUTURE TIME SHADE (REMAINDER OF SHIFT) -->
+            <rect id="trendFutureShade" x="0" y="0" width="800" height="200" fill="rgba(255,255,255,0.015)" style="pointer-events:none;"/>
+
             <!-- TARGET BENCHMARK LINES -->
             <line x1="0" y1="36" x2="800" y2="36" stroke="var(--yellow)" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.9"/>
             <text x="792" y="48" fill="var(--yellow)" font-size="9" font-family="var(--mono)" font-weight="500" text-anchor="end">Target 82%</text>
@@ -1181,18 +1195,24 @@
             <line x1="0" y1="30" x2="800" y2="30" stroke="var(--good)" stroke-width="1.2" stroke-dasharray="4,4" opacity="0.9"/>
             <text x="792" y="24" fill="var(--good)" font-size="9" font-family="var(--mono)" font-weight="500" text-anchor="end">World Class 85%</text>
 
-            <!-- AREA FILL -->
+            <!-- AREA FILL FOR OEE -->
             <path id="trendAreaOee" fill="url(#areaGradOee)" d="" />
 
-            <!-- TREND LINE PATHS -->
-            <path id="trendPathAvail" fill="none" stroke="var(--warn)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="" />
-            <path id="trendPathQual" fill="none" stroke="var(--good)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="" />
-            <path id="trendPathOee" fill="none" stroke="var(--ember)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="" />
+            <!-- TREND LINE PATHS (AVAILABILITY, PERFORMANCE, QUALITY, OEE) -->
+            <path id="trendPathAvail" fill="none" stroke="var(--warn)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="" />
+            <path id="trendPathPerf" fill="none" stroke="var(--purple)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="" />
+            <path id="trendPathQual" fill="none" stroke="var(--good)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="" />
+            <path id="trendPathOee" fill="none" stroke="var(--ember)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="" />
+
+            <!-- REAL-TIME LIVE PIN MARKER -->
+            <line id="trendLiveLine" x1="0" y1="0" x2="0" y2="200" stroke="var(--ember)" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.85" style="pointer-events:none;"/>
+            <circle id="trendLiveDot" cx="0" cy="0" r="4.5" fill="var(--ember)" stroke="var(--bg-1)" stroke-width="2" style="pointer-events:none;"/>
 
             <!-- HOVER GUIDE CROSSHAIR & DOTS -->
-            <line id="trendGuideLine" x1="0" y1="0" x2="0" y2="200" stroke="var(--ember)" stroke-width="1" stroke-dasharray="3" style="display:none;pointer-events:none;"/>
-            <circle id="trendDotOee" r="4" fill="var(--ember)" stroke="var(--bg-1)" stroke-width="2" style="display:none;pointer-events:none;"/>
+            <line id="trendGuideLine" x1="0" y1="0" x2="0" y2="200" stroke="var(--text-hi)" stroke-width="1" stroke-dasharray="3,3" opacity="0.7" style="display:none;pointer-events:none;"/>
+            <circle id="trendDotOee" r="4.5" fill="var(--ember)" stroke="var(--bg-1)" stroke-width="2" style="display:none;pointer-events:none;"/>
             <circle id="trendDotAvail" r="3.5" fill="var(--warn)" stroke="var(--bg-1)" stroke-width="2" style="display:none;pointer-events:none;"/>
+            <circle id="trendDotPerf" r="3.5" fill="var(--purple)" stroke="var(--bg-1)" stroke-width="2" style="display:none;pointer-events:none;"/>
             <circle id="trendDotQual" r="3.5" fill="var(--good)" stroke="var(--bg-1)" stroke-width="2" style="display:none;pointer-events:none;"/>
           </svg>
 
@@ -1200,22 +1220,23 @@
           <div id="trendTooltip" class="trend-tooltip" style="display:none;position:absolute;pointer-events:none;z-index:30;"></div>
         </div>
 
-        <!-- X-AXIS LABELS -->
+        <!-- X-AXIS LABELS (FULL SHIFT B: 06:00:00 SAMPAI 14:00:00) -->
         <div class="trend-x-axis" id="trendXAxis" style="margin-left:45px;display:flex;justify-content:space-between;margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--text-low);font-weight:600;">
-          <span>06:00</span>
-          <span>06:08</span>
-          <span>06:16</span>
-          <span>06:24</span>
-          <span style="text-align:right;">Live</span>
+          <span style="text-align:left;">06:00<br><small style="font-weight:400;color:var(--text-low);">Mulai Shift</small></span>
+          <span style="text-align:center;">08:00</span>
+          <span style="text-align:center;">10:00<br><small style="font-weight:400;color:var(--text-low);">Istirahat 11:30</small></span>
+          <span style="text-align:center;">12:00</span>
+          <span style="text-align:right;">14:00<br><small style="font-weight:400;color:var(--text-low);">Selesai Shift</small></span>
         </div>
       </div>
 
       <div class="trend-legend">
         <div class="legend-item"><div class="legend-swatch" style="background:var(--ember);"></div> <b>OEE Line</b> (Gabungan A × P × Q)</div>
         <div class="legend-item"><div class="legend-swatch" style="background:var(--warn);"></div> <b>Availability</b> (Waktu Kesiapan)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--purple);"></div> <b>Performance</b> (Efisiensi Kinerja)</div>
         <div class="legend-item"><div class="legend-swatch" style="background:var(--good);"></div> <b>Quality</b> (Tingkat Mutu Produk)</div>
-        <div class="legend-item"><div class="legend-swatch" style="background:#D97706;height:2px;border-radius:0;"></div> Target 82%</div>
-        <div class="legend-item"><div class="legend-swatch" style="background:#059669;height:2px;border-radius:0;"></div> World Class 85%</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--yellow);height:2px;border-radius:0;"></div> Target 82%</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--good);height:2px;border-radius:0;"></div> World Class 85%</div>
       </div>
     </div>
 
@@ -2310,25 +2331,29 @@ let oeeTrendHistory = [];
 
 function initTrendHistory(){
   if(oeeTrendHistory.length > 0) return;
-  const count = 30;
-  const currentElapsed = Math.max(300, state.clockSec - SHIFT_START);
-  const stepSec = Math.max(10, Math.floor(currentElapsed / count));
+  // Initialize historical points from SHIFT_START (06:00:00) up to current state.clockSec
+  const elapsed = Math.max(300, state.clockSec - SHIFT_START);
+  const count = Math.min(80, Math.max(20, Math.floor(elapsed / 15)));
+  const stepSec = Math.max(5, Math.floor(elapsed / count));
 
-  for(let i=0; i<count; i++){
-    const ptClock = SHIFT_START + (i * stepSec);
-    const noise = (Math.sin(i * 0.5) * 3) + ((rand() - 0.5) * 2);
-    const avail = Math.min(100, Math.max(65, 88 + noise));
-    const perf = Math.min(100, Math.max(70, 91 + (Math.cos(i*0.4)*3)));
-    const qual = Math.min(100, Math.max(95, 99.2 + ((rand()-0.5)*0.8)));
-    const oee = (avail/100) * (perf/100) * (qual/100) * 100;
+  for(let i = 0; i <= count; i++){
+    const ptClock = Math.min(state.clockSec, SHIFT_START + (i * stepSec));
+    const noiseA = (Math.sin(i * 0.4) * 3.5) + ((rand() - 0.5) * 2.5);
+    const noiseP = (Math.cos(i * 0.35) * 4) + ((rand() - 0.5) * 2);
+    const noiseQ = ((rand() - 0.5) * 0.8);
+    
+    const avail = Math.min(100, Math.max(65, 87.5 + noiseA));
+    const perf = Math.min(100, Math.max(70, 91.2 + noiseP));
+    const qual = Math.min(100, Math.max(95, 99.4 + noiseQ));
+    const oee = (avail / 100) * (perf / 100) * (qual / 100) * 100;
 
     oeeTrendHistory.push({
       time: fmtClock(ptClock),
       clockSec: ptClock,
-      oee: Math.round(oee*10)/10,
-      avail: Math.round(avail*10)/10,
-      perf: Math.round(perf*10)/10,
-      qual: Math.round(qual*10)/10
+      oee: Math.round(oee * 10) / 10,
+      avail: Math.round(avail * 10) / 10,
+      perf: Math.round(perf * 10) / 10,
+      qual: Math.round(qual * 10) / 10
     });
   }
 }
@@ -2339,16 +2364,16 @@ function updateTrendChart(m){
   const livePt = {
     time: fmtClock(state.clockSec),
     clockSec: state.clockSec,
-    oee: Math.round(m.oee*10)/10,
-    avail: Math.round(m.availability*10)/10,
-    perf: Math.round(m.performance*10)/10,
-    qual: Math.round(m.quality*10)/10
+    oee: Math.round(m.oee * 10) / 10,
+    avail: Math.round(m.availability * 10) / 10,
+    perf: Math.round(m.performance * 10) / 10,
+    qual: Math.round(m.quality * 10) / 10
   };
 
   const last = oeeTrendHistory[oeeTrendHistory.length - 1];
+  // Sample every 15-20 simulated seconds; update latest in-between
   if(!last || (state.clockSec - last.clockSec >= 15)){
     oeeTrendHistory.push(livePt);
-    if(oeeTrendHistory.length > 40) oeeTrendHistory.shift();
   } else {
     oeeTrendHistory[oeeTrendHistory.length - 1] = livePt;
   }
@@ -2356,45 +2381,80 @@ function updateTrendChart(m){
   if(oeeTrendHistory.length < 2) return;
 
   const width = 800, height = 200;
-  const numPoints = oeeTrendHistory.length;
-  const stepX = width / (numPoints - 1);
+  const SHIFT_DURATION = 8 * 3600; // 28800s (06:00 to 14:00 full shift)
 
   const getY = (val) => {
     const clamped = Math.max(0, Math.min(100, val));
     return height - (clamped / 100) * height;
   };
 
-  // Generate SVG path d strings
-  let pathD_Oee = "", pathD_Avail = "", pathD_Qual = "";
+  // Generate SVG path d strings scaled across the FULL 8-HOUR SHIFT (06:00 to 14:00)
+  let pathD_Oee = "", pathD_Avail = "", pathD_Perf = "", pathD_Qual = "";
+  let firstX = 0, lastX = 0;
+
   oeeTrendHistory.forEach((pt, i) => {
-    const x = (i * stepX).toFixed(1);
+    const xClamped = Math.max(0, Math.min(width, ((pt.clockSec - SHIFT_START) / SHIFT_DURATION) * width));
+    const x = xClamped.toFixed(1);
     const yOee = getY(pt.oee).toFixed(1);
     const yAvail = getY(pt.avail).toFixed(1);
+    const yPerf = getY(pt.perf).toFixed(1);
     const yQual = getY(pt.qual).toFixed(1);
 
-    pathD_Oee += `${i===0?'M':'L'} ${x} ${yOee} `;
-    pathD_Avail += `${i===0?'M':'L'} ${x} ${yAvail} `;
-    pathD_Qual += `${i===0?'M':'L'} ${x} ${yQual} `;
+    if(i === 0) firstX = x;
+    lastX = x;
+
+    pathD_Oee += `${i === 0 ? 'M' : 'L'} ${x} ${yOee} `;
+    pathD_Avail += `${i === 0 ? 'M' : 'L'} ${x} ${yAvail} `;
+    pathD_Perf += `${i === 0 ? 'M' : 'L'} ${x} ${yPerf} `;
+    pathD_Qual += `${i === 0 ? 'M' : 'L'} ${x} ${yQual} `;
   });
 
   const pathOee = document.getElementById('trendPathOee');
   const pathAvail = document.getElementById('trendPathAvail');
+  const pathPerf = document.getElementById('trendPathPerf');
   const pathQual = document.getElementById('trendPathQual');
   const areaOee = document.getElementById('trendAreaOee');
 
   if(pathOee) pathOee.setAttribute('d', pathD_Oee);
   if(pathAvail) pathAvail.setAttribute('d', pathD_Avail);
+  if(pathPerf) pathPerf.setAttribute('d', pathD_Perf);
   if(pathQual) pathQual.setAttribute('d', pathD_Qual);
 
-  if(areaOee){
-    const lastX = ((numPoints-1) * stepX).toFixed(1);
-    const areaD = `${pathD_Oee} L ${lastX} 200 L 0 200 Z`;
+  if(areaOee && oeeTrendHistory.length > 0){
+    const areaD = `${pathD_Oee} L ${lastX} 200 L ${firstX} 200 Z`;
     areaOee.setAttribute('d', areaD);
   }
 
+  // Update Real-Time Live Pin Marker & Future Shade
+  const liveX = Math.max(0, Math.min(width, ((state.clockSec - SHIFT_START) / SHIFT_DURATION) * width));
+  const liveY = getY(livePt.oee);
+
+  const liveLine = document.getElementById('trendLiveLine');
+  const liveDot = document.getElementById('trendLiveDot');
+  const futureShade = document.getElementById('trendFutureShade');
+
+  if(liveLine){
+    liveLine.setAttribute('x1', liveX.toFixed(1));
+    liveLine.setAttribute('x2', liveX.toFixed(1));
+  }
+  if(liveDot){
+    liveDot.setAttribute('cx', liveX.toFixed(1));
+    liveDot.setAttribute('cy', liveY.toFixed(1));
+  }
+  if(futureShade){
+    futureShade.setAttribute('x', liveX.toFixed(1));
+    futureShade.setAttribute('width', Math.max(0, width - liveX).toFixed(1));
+  }
+
+  // Update Live Time in Title / Badge
+  const liveBadge = document.getElementById('trendLiveTimeBadge');
+  if(liveBadge){
+    liveBadge.textContent = 'Live: ' + fmtClock(state.clockSec);
+  }
+
   // Calculate & Update KPI Badges
-  const oeeValues = oeeTrendHistory.map(p=>p.oee);
-  const avgOee = (oeeValues.reduce((a,b)=>a+b,0) / oeeValues.length).toFixed(1);
+  const oeeValues = oeeTrendHistory.map(p => p.oee);
+  const avgOee = (oeeValues.reduce((a, b) => a + b, 0) / oeeValues.length).toFixed(1);
   const minOee = Math.min(...oeeValues).toFixed(0);
   const maxOee = Math.max(...oeeValues).toFixed(0);
 
@@ -2411,20 +2471,6 @@ function updateTrendChart(m){
     benchmarkEl.style.color = isOverTarget ? 'var(--good)' : 'var(--warn)';
   }
 
-  // Update X-Axis Time Labels
-  const xAxisEl = document.getElementById('trendXAxis');
-  if(xAxisEl && oeeTrendHistory.length >= 5){
-    const stepIdx = Math.floor((oeeTrendHistory.length - 1) / 4);
-    const times = [
-      oeeTrendHistory[0].time,
-      oeeTrendHistory[stepIdx].time,
-      oeeTrendHistory[stepIdx*2].time,
-      oeeTrendHistory[stepIdx*3].time,
-      'Live (' + oeeTrendHistory[oeeTrendHistory.length-1].time + ')'
-    ];
-    xAxisEl.innerHTML = times.map((t, idx)=>`<span style="${idx===4?'text-align:right;':(idx===0?'text-align:left;':'text-align:center;')}">${t}</span>`).join('');
-  }
-
   // Setup interactive hover event handlers once
   setupTrendHoverListeners();
 }
@@ -2439,52 +2485,67 @@ function setupTrendHoverListeners(){
   const guideLine = document.getElementById('trendGuideLine');
   const dotOee = document.getElementById('trendDotOee');
   const dotAvail = document.getElementById('trendDotAvail');
+  const dotPerf = document.getElementById('trendDotPerf');
   const dotQual = document.getElementById('trendDotQual');
   const tooltip = document.getElementById('trendTooltip');
 
+  const width = 800, height = 200;
+  const SHIFT_DURATION = 8 * 3600;
+
   function handleHover(e){
-    if(oeeTrendHistory.length < 2) return;
+    if(oeeTrendHistory.length < 1) return;
     const rect = svg.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const mouseX = Math.max(0, Math.min(rect.width, clientX - rect.left));
-    const pctX = mouseX / rect.width;
-    const idx = Math.round(pctX * (oeeTrendHistory.length - 1));
-    const pt = oeeTrendHistory[idx];
-    if(!pt) return;
+    const svgX = (mouseX / rect.width) * width;
 
-    const width = 800, height = 200;
-    const stepX = width / (oeeTrendHistory.length - 1);
-    const svgX = idx * stepX;
+    // Find closest recorded data point
+    let closestPt = oeeTrendHistory[0];
+    let minDiff = Infinity;
+    for(let i = 0; i < oeeTrendHistory.length; i++){
+      const pt = oeeTrendHistory[i];
+      const ptX = ((pt.clockSec - SHIFT_START) / SHIFT_DURATION) * width;
+      const diff = Math.abs(ptX - svgX);
+      if(diff < minDiff){
+        minDiff = diff;
+        closestPt = pt;
+      }
+    }
+    if(!closestPt) return;
 
+    const snapX = (((closestPt.clockSec - SHIFT_START) / SHIFT_DURATION) * width).toFixed(1);
     const getY = (val) => height - (Math.max(0, Math.min(100, val)) / 100) * height;
-    const yOee = getY(pt.oee);
-    const yAvail = getY(pt.avail);
-    const yQual = getY(pt.qual);
+
+    const yOee = getY(closestPt.oee).toFixed(1);
+    const yAvail = getY(closestPt.avail).toFixed(1);
+    const yPerf = getY(closestPt.perf).toFixed(1);
+    const yQual = getY(closestPt.qual).toFixed(1);
 
     if(guideLine){
-      guideLine.setAttribute('x1', svgX);
-      guideLine.setAttribute('x2', svgX);
+      guideLine.setAttribute('x1', snapX);
+      guideLine.setAttribute('x2', snapX);
       guideLine.style.display = 'block';
     }
-    if(dotOee){ dotOee.setAttribute('cx', svgX); dotOee.setAttribute('cy', yOee); dotOee.style.display = 'block'; }
-    if(dotAvail){ dotAvail.setAttribute('cx', svgX); dotAvail.setAttribute('cy', yAvail); dotAvail.style.display = 'block'; }
-    if(dotQual){ dotQual.setAttribute('cx', svgX); dotQual.setAttribute('cy', yQual); dotQual.style.display = 'block'; }
+    if(dotOee){ dotOee.setAttribute('cx', snapX); dotOee.setAttribute('cy', yOee); dotOee.style.display = 'block'; }
+    if(dotAvail){ dotAvail.setAttribute('cx', snapX); dotAvail.setAttribute('cy', yAvail); dotAvail.style.display = 'block'; }
+    if(dotPerf){ dotPerf.setAttribute('cx', snapX); dotPerf.setAttribute('cy', yPerf); dotPerf.style.display = 'block'; }
+    if(dotQual){ dotQual.setAttribute('cx', snapX); dotQual.setAttribute('cy', yQual); dotQual.style.display = 'block'; }
 
     if(tooltip){
-      const statusText = pt.oee >= 85 ? 'World Class' : (pt.oee >= 82 ? 'Di Atas Target' : 'Di Bawah Target');
+      const statusText = closestPt.oee >= 85 ? 'World Class (≥ 85%)' : (closestPt.oee >= 82 ? 'Di Atas Target (≥ 82%)' : 'Di Bawah Target (< 82%)');
       tooltip.innerHTML = `
-        <div class="tt-time">${pt.time}</div>
-        <div class="tt-row"><span style="color:var(--ember);">● OEE Line:</span><span>${pt.oee.toFixed(1)}%</span></div>
-        <div class="tt-row"><span style="color:var(--warn);">● Availability:</span><span>${pt.avail.toFixed(1)}%</span></div>
-        <div class="tt-row"><span style="color:var(--cyan);">● Performance:</span><span>${pt.perf.toFixed(1)}%</span></div>
-        <div class="tt-row"><span style="color:var(--good);">● Quality:</span><span>${pt.qual.toFixed(1)}%</span></div>
-        <div style="margin-top:6px;font-size:10px;color:${pt.oee>=82?'var(--good)':'var(--warn)'};font-weight:600;">${statusText}</div>
+        <div class="tt-time">Waktu: ${closestPt.time} (Shift B)</div>
+        <div class="tt-row"><span style="color:var(--ember);">● OEE Line:</span><strong>${closestPt.oee.toFixed(1)}%</strong></div>
+        <div class="tt-row"><span style="color:var(--warn);">● Availability:</span><span>${closestPt.avail.toFixed(1)}%</span></div>
+        <div class="tt-row"><span style="color:var(--purple);">● Performance:</span><span>${closestPt.perf.toFixed(1)}%</span></div>
+        <div class="tt-row"><span style="color:var(--good);">● Quality:</span><span>${closestPt.qual.toFixed(1)}%</span></div>
+        <div style="margin-top:6px;font-size:10px;color:${closestPt.oee>=82?'var(--good)':'var(--warn)'};font-weight:600;border-top:1px dashed var(--steel-line);padding-top:4px;">${statusText}</div>
       `;
 
       let leftPos = mouseX + 15;
-      if(leftPos + 180 > rect.width) leftPos = mouseX - 190;
-      tooltip.style.left = leftPos + 'px';
-      tooltip.style.top = '20px';
+      if(leftPos + 200 > rect.width) leftPos = mouseX - 210;
+      tooltip.style.left = Math.max(10, leftPos) + 'px';
+      tooltip.style.top = '15px';
       tooltip.style.display = 'block';
     }
   }
@@ -2493,6 +2554,7 @@ function setupTrendHoverListeners(){
     if(guideLine) guideLine.style.display = 'none';
     if(dotOee) dotOee.style.display = 'none';
     if(dotAvail) dotAvail.style.display = 'none';
+    if(dotPerf) dotPerf.style.display = 'none';
     if(dotQual) dotQual.style.display = 'none';
     if(tooltip) tooltip.style.display = 'none';
   }
